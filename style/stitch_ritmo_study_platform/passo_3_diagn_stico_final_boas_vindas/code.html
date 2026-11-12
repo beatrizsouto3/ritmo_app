@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_stack" name="shell-type"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "background": "#f8f9ff", "on-surface-variant": "#42474f", "surface-dim": "#c4dcff", "surface-container-high": "#dce9ff", "on-tertiary": "#ffffff", "primary-container": "#0a4174", "primary-fixed": "#d3e3ff", "tertiary-fixed": "#b3ebff", "on-tertiary-fixed": "#001f27", "primary-fixed-dim": "#a3c9ff", "outline-variant": "#c2c6d1", "on-secondary-container": "#2a5981", "surface-container-highest": "#d3e4ff", "surface-tint": "#346095", "on-primary-fixed": "#001c39", "tertiary-container": "#004656", "on-tertiary-fixed-variant": "#004e5f", "on-background": "#001c38", "secondary-fixed-dim": "#9ecbf8", "inverse-primary": "#a3c9ff", "surface-container-lowest": "#ffffff", "outline": "#737780", "surface": "#f8f9ff", "on-primary": "#ffffff", "on-tertiary-container": "#75b4c9", "on-secondary": "#ffffff", "on-error": "#ffffff", "inverse-on-surface": "#eaf1ff", "primary": "#002b52", "surface-variant": "#d3e4ff", "surface-bright": "#f8f9ff", "secondary-container": "#a4d0fe", "secondary": "#33628a", "surface-container": "#e6eeff", "secondary-fixed": "#cee5ff", "tertiary-fixed-dim": "#90d0e5", "inverse-surface": "#18314e", "on-secondary-fixed": "#001d33", "on-secondary-fixed-variant": "#164a70", "on-surface": "#001c38", "on-primary-fixed-variant": "#16487b", "error": "#ba1a1a", "surface-container-low": "#eff4ff", "tertiary": "#002e39", "on-error-container": "#93000a", "error-container": "#ffdad6", "on-primary-container": "#85aee8" }, "borderRadius": { "DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px" }, "spacing": { "space-md": "1rem", "space-xl": "2.25rem", "gutter": "1rem", "space-lg": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "margin": "1.25rem" }, "fontFamily": { "body-lg": ["Plus Jakarta Sans"], "headline-lg": ["Plus Jakarta Sans"], "label-lg": ["Plus Jakarta Sans"], "body-md": ["Plus Jakarta Sans"], "headline-sm": ["Plus Jakarta Sans"], "label-md": ["Plus Jakarta Sans"], "headline-lg-mobile": ["Plus Jakarta Sans"], "headline-md": ["Plus Jakarta Sans"], "body-sm": ["Plus Jakarta Sans"], "display-lg": ["Plus Jakarta Sans"], "display-sm": ["Plus Jakarta Sans"], "label-sm": ["Plus Jakarta Sans"] }, "fontSize": { "body-lg": ["16px", { "lineHeight": "24px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-lg": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600" }], "body-md": ["14px", { "lineHeight": "22px", "letterSpacing": "0em", "fontWeight": "400" }], "headline-sm": ["18px", { "lineHeight": "26px", "letterSpacing": "-0.005em", "fontWeight": "600" }], "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }], "headline-lg-mobile": ["26px", { "lineHeight": "34px", "letterSpacing": "-0.015em", "fontWeight": "700" }], "headline-md": ["22px", { "lineHeight": "30px", "letterSpacing": "-0.01em", "fontWeight": "600" }], "body-sm": ["12px", { "lineHeight": "18px", "letterSpacing": "0.01em", "fontWeight": "400" }], "display-lg": ["56px", { "lineHeight": "64px", "letterSpacing": "-0.03em", "fontWeight": "700" }], "display-sm": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.02em", "fontWeight": "700" }], "label-sm": ["11px", { "lineHeight": "14px", "letterSpacing": "0.04em", "fontWeight": "700" }] } } } };</script><style>@layer base { html, body { width: 100%; margin: 0; padding: 0; } .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); } .pt-safe { padding-top: env(safe-area-inset-top, 0px); } } ::-webkit-scrollbar { display: none; }</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="min-h-screen bg-gradient-to-b from-surface via-surface-container-low to-surface text-on-surface font-body-md text-body-md flex flex-col antialiased selection:bg-secondary-container"><header class="fixed top-0 inset-x-0 z-50 bg-surface/80 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(0,29,57,0.04)]"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><button aria-label="Voltar" class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container transition-colors active:scale-95" onclick="history.back()" type="button"><span class="material-symbols-outlined text-[22px]">arrow_back</span></button><span class="font-headline-sm text-headline-sm text-primary font-bold ml-1 hidden sm:inline">Ritmo</span></div><div class="flex items-center gap-space-xs"><span class="font-label-lg text-label-lg text-primary text-center px-space-xs">Onboarding Goal</span></div><div class="min-w-[44px] min-h-[44px] flex items-center justify-end"><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-safe bg-transparent"><div class="flex flex-col w-full px-margin pb-space-xl space-y-space-lg">
+<!-- Stepper de Conclusão (100%) -->
+<section class="flex flex-col space-y-space-xs pt-space-xs">
+<div class="flex items-center justify-between font-label-md text-label-md text-on-surface-variant">
+<span class="font-bold tracking-wide uppercase text-primary">Passo 3 de 3</span>
+<span class="font-semibold text-secondary">Diagnóstico &amp; Boas-Vindas</span>
+</div>
+<!-- Barra de Progresso Integral -->
+<div class="w-full h-2 rounded-full bg-surface-container overflow-hidden">
+<div class="h-full rounded-full bg-primary-container transition-all duration-700 w-full shadow-sm"></div>
+</div>
+<!-- Badge de Validação do Algoritmo -->
+<div class="flex items-center pt-space-xs">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-high shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-primary" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span class="font-label-sm text-label-sm text-primary">Algoritmo SRS &amp; Ritmo Calibrados</span>
+</div>
+</div>
+</section>
+<!-- Cabeçalho de Boas-Vindas -->
+<section class="flex flex-col space-y-space-xs">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-primary tracking-tight">
+      Tudo pronto, Beatriz!
+    </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+      Cruzamos sua meta, suas 4 matérias e seu cronótipo. Seu ciclo personalizado de retenção máxima de <span class="font-semibold text-primary">92%</span> foi gerado.
+    </p>
+</section>
+<!-- Card Principal de Diagnóstico do Ciclo Neural -->
+<section class="relative overflow-hidden rounded-lg bg-gradient-to-br from-surface-container-low via-surface-container to-surface-container-high p-space-md shadow-[0_10px_26px_-4px_rgba(0,29,57,0.08)] flex flex-col space-y-space-md">
+<!-- Header do Diagnóstico -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[18px]">psychology</span>
+</div>
+<div>
+<span class="block font-label-md text-label-md text-primary uppercase font-bold tracking-wider">Curva Neural de Ebbinghaus</span>
+<span class="block font-body-sm text-body-sm text-secondary font-medium">SRS Ativo vs. Esquecimento Passivo</span>
+</div>
+</div>
+<div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-lowest shadow-sm">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-label-sm text-label-sm text-primary font-bold">92% Retenção</span>
+</div>
+</div>
+<!-- Gráfico SVG Curva de Retenção -->
+<div class="w-full bg-surface-container-lowest/80 rounded-DEFAULT p-space-sm backdrop-blur-sm shadow-sm flex flex-col space-y-space-xs">
+<div class="h-32 w-full">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 340 120">
+<defs>
+<lineargradient id="ritmoGlow" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" stop-color="#0a4174" stop-opacity="0.32"></stop>
+<stop offset="100%" stop-color="#0a4174" stop-opacity="0.02"></stop>
+</lineargradient>
+</defs>
+<!-- Linhas de Apoio Sutis -->
+<line stroke="#dce9ff" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="340" y1="20"></line>
+<line stroke="#dce9ff" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="340" y1="65"></line>
+<line stroke="#dce9ff" stroke-dasharray="3 3" stroke-width="1" x1="0" x2="340" y1="105"></line>
+<!-- Curva do Esquecimento Tradicional (Queda para ~20%) -->
+<path d="M 10 24 C 60 70, 120 102, 330 106" fill="none" opacity="0.65" stroke="#737780" stroke-linecap="round" stroke-width="2"></path>
+<!-- Área Gradiente Curva Ritmo SRS -->
+<path d="M 10 20 C 60 22, 80 40, 95 22 C 140 23, 170 38, 185 22 C 235 24, 265 36, 280 22 C 305 23, 320 28, 330 22 L 330 115 L 10 115 Z" fill="url(#ritmoGlow)"></path>
+<!-- Curva Sustentada Ritmo SRS com Picos de Repetição Ativa -->
+<path d="M 10 20 C 60 22, 80 40, 95 22 C 140 23, 170 38, 185 22 C 235 24, 265 36, 280 22 C 305 23, 320 28, 330 22" fill="none" stroke="#0a4174" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path>
+<!-- Pontos de Repetição Espaçada (Gatilhos Neurais) -->
+<circle cx="10" cy="20" fill="#0a4174" r="3.5"></circle>
+<circle cx="95" cy="22" fill="#002b52" r="4"></circle>
+<circle cx="185" cy="22" fill="#002b52" r="4"></circle>
+<circle cx="280" cy="22" fill="#002b52" r="4"></circle>
+<circle cx="330" cy="22" fill="#0a4174" r="4"></circle>
+</svg>
+</div>
+<!-- Legenda do Gráfico -->
+<div class="flex items-center justify-between pt-1 border-t border-surface-container-high/40 text-[11px] font-label-sm">
+<div class="flex items-center gap-1.5 text-primary">
+<span class="w-2.5 h-1 rounded-full bg-primary-container"></span>
+<span>Ritmo SRS (92%)</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="w-2.5 h-1 rounded-full bg-outline"></span>
+<span>Sem Revisão (20%)</span>
+</div>
+<span class="text-on-surface-variant font-medium">Ciclo 30 dias</span>
+</div>
+</div>
+<!-- Indicador de Projeção & Meta Consolidada -->
+<div class="grid grid-cols-2 gap-space-xs pt-space-xs">
+<div class="bg-surface-container-lowest p-space-sm rounded-DEFAULT flex flex-col justify-between shadow-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Próximo Gatilho</span>
+<div class="flex items-center gap-1 text-primary mt-1">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+<span class="font-headline-sm text-headline-sm font-bold">24 horas</span>
+</div>
+<span class="font-body-sm text-[11px] text-secondary">1º Ciclo de Reforço</span>
+</div>
+<div class="bg-surface-container-lowest p-space-sm rounded-DEFAULT flex flex-col justify-between shadow-sm">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Meta Diária</span>
+<div class="flex items-center gap-1 text-primary mt-1">
+<span class="material-symbols-outlined text-[16px]">timelapse</span>
+<span class="font-headline-sm text-headline-sm font-bold">4h líq.</span>
+</div>
+<span class="font-body-sm text-[11px] text-secondary">5 dias por semana</span>
+</div>
+</div>
+</section>
+<!-- Resumo das Configurações Salvas -->
+<section class="flex flex-col space-y-space-sm">
+<div class="flex items-center justify-between px-space-xs">
+<span class="font-label-md text-label-md text-primary font-bold uppercase tracking-wider">
+        Configurações Ativadas
+      </span>
+<span class="font-label-sm text-label-sm text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> 4 parâmetros
+      </span>
+</div>
+<!-- Grade de Parâmetros -->
+<div class="grid grid-cols-1 gap-space-xs">
+<!-- Matérias no Radar -->
+<div class="bg-surface-container-lowest p-space-md rounded-DEFAULT shadow-[0_4px_18px_-2px_rgba(0,29,57,0.05)] flex flex-col space-y-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">library_books</span>
+<span class="font-label-lg text-label-lg text-on-surface font-semibold">4 Matérias no Radar</span>
+</div>
+<span class="font-label-sm text-label-sm text-secondary bg-surface-container px-2 py-0.5 rounded-full font-bold">
+            Prioridade Alta
+          </span>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px] text-secondary">balance</span>
+            Dir. Constitucional
+          </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px] text-secondary">gavel</span>
+            Dir. Administrativo
+          </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px] text-secondary">translate</span>
+            Português
+          </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-low text-primary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px] text-secondary">calculate</span>
+            RLM
+          </span>
+</div>
+</div>
+<!-- Dupla de Cards: Horário & Pomodoro -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-xs">
+<!-- Prontidão Neural -->
+<div class="bg-surface-container-lowest p-space-sm rounded-DEFAULT shadow-[0_4px_14px_-2px_rgba(0,29,57,0.04)] flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">nightlight</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Janela de Prontidão</span>
+<span class="block font-label-md text-label-md text-primary font-bold truncate">Seg a Sex às 19:30</span>
+<span class="block font-body-sm text-[11px] text-secondary">Foco Profundo Noturno</span>
+</div>
+</div>
+<!-- Ciclo de Foco -->
+<div class="bg-surface-container-lowest p-space-sm rounded-DEFAULT shadow-[0_4px_14px_-2px_rgba(0,29,57,0.04)] flex items-start gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]">timer</span>
+</div>
+<div class="min-w-0">
+<span class="block font-label-sm text-label-sm text-on-surface-variant font-bold uppercase">Ritmo Pomodoro</span>
+<span class="block font-label-md text-label-md text-primary font-bold truncate">50 min + 10 min</span>
+<span class="block font-body-sm text-[11px] text-secondary">Pausa de Restauração</span>
+</div>
+</div>
+</div>
+<!-- Alertas Inteligentes SRS -->
+<div class="bg-surface-container-lowest p-space-sm rounded-DEFAULT shadow-[0_4px_14px_-2px_rgba(0,29,57,0.04)] flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-full bg-surface-container text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">notifications_active</span>
+</div>
+<div>
+<span class="block font-label-md text-label-md text-primary font-bold">Alertas Inteligentes Ativos</span>
+<span class="block font-body-sm text-[12px] text-on-surface-variant">Lembretes sincronizados na curva de declínio</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[22px]">tune</span>
+</div>
+</div>
+</section>
+<!-- Bônus / Dica Neurocientífica: Primeira Missão -->
+<section class="rounded-DEFAULT bg-primary p-space-md text-on-primary shadow-[0_8px_24px_-4px_rgba(0,29,57,0.22)] relative overflow-hidden">
+<!-- Efeito luminoso suave no fundo -->
+<div class="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-primary-container opacity-40 blur-2xl pointer-events-none"></div>
+<div class="flex items-start gap-space-sm relative z-10">
+<div class="w-10 h-10 rounded-full bg-surface-container-high/20 backdrop-blur-md flex items-center justify-center shrink-0 text-secondary-fixed">
+<span class="material-symbols-outlined text-[22px]" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<div class="flex flex-col space-y-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary-fixed font-bold">
+          Primeira Missão do Hub
+        </span>
+<p class="font-body-md text-body-md text-inverse-on-surface leading-snug">
+          Completar <strong class="text-on-primary font-bold">1 ciclo de 50 min hoje</strong> destrava sua primeira sequência de foco e calibra os primeiros <span class="text-secondary-fixed font-semibold">10 flashcards</span> no seu algoritmo.
+        </p>
+</div>
+</div>
+</section>
+<!-- CTA Primário e Opção de Ajuste -->
+<section class="flex flex-col items-center space-y-space-sm pt-space-xs">
+<button class="w-full py-4 px-space-md rounded-full bg-primary-container text-on-primary font-label-lg text-label-lg font-bold shadow-[0_8px_20px_-3px_rgba(10,65,116,0.35)] flex items-center justify-center gap-2 active:scale-[0.98] transition-all hover:bg-primary" type="button">
+<span>Entrar no meu Hub de Estudos</span>
+<span class="material-symbols-outlined text-[20px]">rocket_launch</span>
+</button>
+<button class="py-2 px-space-md font-label-md text-label-md text-secondary hover:text-primary transition-colors flex items-center gap-1 active:opacity-75" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Revisar parâmetros de estudo</span>
+</button>
+</section>
+</div></main>
+</body></html>
