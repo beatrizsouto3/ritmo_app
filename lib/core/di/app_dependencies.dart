@@ -4,10 +4,13 @@ import 'package:provider/provider.dart';
 
 import '../../data/repositories/subject_repository.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/repositories/flashcard_repository.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/flashcard_service.dart';
 import '../../data/services/subject_service.dart';
 import '../../ui/subjects/subjects_view_model.dart';
 import '../../ui/auth/auth_view_model.dart';
+import '../../ui/flashcards/flashcards_view_model.dart';
 import '../config/supabase_config.dart';
 
 class AppDependencies extends StatelessWidget {
@@ -40,8 +43,8 @@ class AppDependencies extends StatelessWidget {
   }
 }
 
-class SubjectDependencies extends StatelessWidget {
-  const SubjectDependencies({super.key, required this.child});
+class AuthenticatedDependencies extends StatelessWidget {
+  const AuthenticatedDependencies({super.key, required this.child});
 
   final Widget child;
 
@@ -60,6 +63,17 @@ class SubjectDependencies extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) =>
               SubjectsViewModel(context.read())..loadSubjects(),
+        ),
+        Provider(
+          create: (context) => FlashcardService(
+            config: context.read(),
+            client: context.read(),
+            accessToken: context.read<AuthRepository>().getAccessToken,
+          ),
+        ),
+        Provider(create: (context) => FlashcardRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => FlashcardsViewModel(context.read())..loadDecks(),
         ),
       ],
       child: child,

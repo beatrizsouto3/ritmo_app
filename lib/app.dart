@@ -29,6 +29,6 @@ class RitmoApp extends StatelessWidget {
       home: auth.isAuthenticated ? const DashboardView() : const AuthView(),
     );
     if (!auth.isAuthenticated) return app;
-    return SubjectDependencies(key: ValueKey(auth.userId), child: app);
+    return AuthenticatedDependencies(key: ValueKey(auth.userId), child: app);
   }
 }

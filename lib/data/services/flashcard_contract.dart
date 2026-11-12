@@ -1,0 +1,20 @@
+abstract final class FlashcardContract {
+  static const decksTable = 'baralhos';
+  static const cardsTable = 'flashcards';
+  static const reviewsTable = 'revisoes_flashcards';
+  static const reviewFunction = 'record_flashcard_review';
+  static const idColumn = 'id';
+  static const nameColumn = 'nome';
+  static const descriptionColumn = 'descricao';
+  static const deckIdColumn = 'baralho_id';
+  static const cardIdColumn = 'flashcard_id';
+  static const frontColumn = 'frente';
+  static const backColumn = 'verso';
+  static const imageUrlColumn = 'imagem_url';
+  static const createdAtColumn = 'criado_em';
+  static const nextReviewAtColumn = 'proxima_revisao_em';
+  static const intervalDaysColumn = 'intervalo_dias';
+  static const repetitionsColumn = 'repeticoes';
+  static const ratingColumn = 'avaliacao';
+  static const reviewedAtColumn = 'revisado_em';
+}

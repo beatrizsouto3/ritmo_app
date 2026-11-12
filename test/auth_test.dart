@@ -13,6 +13,7 @@ import 'package:ritmo_app/data/services/auth_service.dart';
 import 'package:ritmo_app/ui/auth/auth_view.dart';
 import 'package:ritmo_app/ui/auth/auth_view_model.dart';
 import 'package:ritmo_app/ui/subjects/subjects_view.dart';
+import 'package:ritmo_app/ui/flashcards/flashcards_view.dart';
 
 const _config = SupabaseConfig(
   url: 'https://ritmo-test.supabase.co',
@@ -295,6 +296,69 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Disciplina B'), findsOneWidget);
       expect(find.text('Disciplina A'), findsNothing);
+    },
+  );
+  testWidgets(
+    'flashcards and nested routes are recreated for each authenticated user',
+    (tester) async {
+      var loginCount = 0;
+      final client = MockClient((request) async {
+        if (request.url.path.endsWith('/logout')) return http.Response('', 204);
+        if (request.url.path.endsWith('/token')) {
+          loginCount++;
+          return _response(
+            _session(userId: 'user-$loginCount', token: 'token-$loginCount'),
+          );
+        }
+        expect(request.headers['authorization'], 'Bearer token-$loginCount');
+        if (request.url.path.endsWith('/baralhos')) {
+          return _response([
+            {
+              'id': 101,
+              'nome': 'Baralho $loginCount',
+              'descricao': null,
+              'criado_em': '2026-01-01T00:00:00Z',
+            },
+          ]);
+        }
+        return _response([]);
+      });
+      addTearDown(client.close);
+      final repository = AuthRepository(
+        AuthService(config: _config, client: client),
+      );
+      final viewModel = AuthViewModel(repository);
+      addTearDown(repository.dispose);
+      addTearDown(viewModel.dispose);
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            Provider.value(value: _config),
+            Provider<http.Client>.value(value: client),
+            ChangeNotifierProvider.value(value: repository),
+            ChangeNotifierProvider.value(value: viewModel),
+          ],
+          child: const RitmoApp(),
+        ),
+      );
+      await viewModel.signIn('a@example.com', 'test-password');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Flashcards'));
+      await tester.pumpAndSettle();
+      expect(find.text('Baralho 1'), findsOneWidget);
+      await tester.tap(find.text('Baralho 1'));
+      await tester.pumpAndSettle();
+      await viewModel.signOut();
+      await tester.pumpAndSettle();
+      expect(find.byType(AuthView), findsOneWidget);
+      expect(find.byType(FlashcardsView), findsNothing);
+      await viewModel.signIn('b@example.com', 'test-password');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Flashcards'));
+      await tester.pumpAndSettle();
+      expect(find.text('Baralho 2'), findsOneWidget);
+      expect(find.text('Baralho 1'), findsNothing);
+      expect(tester.takeException(), isNull);
     },
   );
 }

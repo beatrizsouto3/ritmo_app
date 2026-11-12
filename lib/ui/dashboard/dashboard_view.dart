@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../auth/auth_view_model.dart';
+import '../flashcards/flashcards_view.dart';
 import '../subjects/subjects_view.dart';
 
 class DashboardView extends StatelessWidget {
@@ -34,6 +35,14 @@ class DashboardView extends StatelessWidget {
               ),
               icon: const Icon(Icons.menu_book_outlined),
               label: const Text('Disciplinas'),
+            ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const FlashcardsView()),
+              ),
+              icon: const Icon(Icons.style_outlined),
+              label: const Text('Flashcards'),
             ),
           ],
         ),

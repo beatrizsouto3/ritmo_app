@@ -16,6 +16,8 @@ class SupabaseConfig {
     return _uri('/auth/v1/$action', queryParameters);
   }
 
+  Uri rpcUri(String function) => _uri('/rest/v1/rpc/$function', const {});
+
   Uri _uri(String path, Map<String, String> queryParameters) {
     final baseUri = Uri.tryParse(url.trim());
     if (baseUri == null ||
