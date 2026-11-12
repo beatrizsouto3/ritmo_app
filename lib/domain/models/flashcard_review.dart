@@ -8,6 +8,7 @@ class FlashcardReview {
     required this.reviewedAt,
     required this.nextReviewAt,
     required this.intervalDays,
+    required this.repetitions,
   });
 
   final int id;
@@ -16,4 +17,5 @@ class FlashcardReview {
   final DateTime reviewedAt;
   final DateTime nextReviewAt;
   final int intervalDays;
+  final int repetitions;
 }

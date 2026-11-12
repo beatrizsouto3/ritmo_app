@@ -13,12 +13,6 @@ class ReviewSchedule {
   final int repetitions;
 }
 
-/// Calcula intervalos simples e previsíveis para o protótipo do Ritmo.
-///
-/// Novos cartões: Errei = 10 min, Difícil = 1 dia, Bom = 3 dias, Fácil = 7
-/// dias. Depois da primeira revisão, os intervalos crescem com fatores 1.2,
-/// 2.0 e 2.5, respectivamente. Essa política pode ser substituída sem alterar
-/// as Views quando a dupla decidir outra regra.
 class ReviewScheduleCalculator {
   const ReviewScheduleCalculator();
 

@@ -1,46 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../../data/models/flashcard.dart';
-import '../../data/models/flashcard_rating.dart';
-import '../../data/models/review_schedule.dart';
+import '../../domain/models/flashcard.dart';
+import '../../domain/models/flashcard_rating.dart';
 import 'flashcard_ui_helpers.dart';
 import 'flashcards_view_model.dart';
 
 class FlashcardReviewView extends StatelessWidget {
-  const FlashcardReviewView({required this.viewModel, super.key});
-
-  final FlashcardsViewModel viewModel;
+  const FlashcardReviewView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: flashcardCanvas,
-      appBar: AppBar(
-        title: const Text('Revisão'),
+    final viewModel = context.watch<FlashcardsViewModel>();
+    final card = viewModel.activeReviewCard;
+    return PopScope(
+      canPop: !viewModel.isSaving,
+      child: Scaffold(
         backgroundColor: flashcardCanvas,
-        foregroundColor: flashcardNavy,
-      ),
-      body: ListenableBuilder(
-        listenable: viewModel,
-        builder: (context, _) {
-          final Flashcard? card = viewModel.activeReviewCard;
-          if (viewModel.isLoading && card == null) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (card == null) {
-            return FlashcardEmptyState(
-              icon: Icons.celebration_outlined,
-              title: 'Revisão concluída!',
-              message:
-                  '${viewModel.reviewCompleted} cartão(ões) revisado(s). Volte mais tarde para continuar.',
-              action: FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Voltar ao baralho'),
-              ),
-            );
-          }
-          return _ReviewCard(viewModel: viewModel, card: card);
-        },
+        appBar: AppBar(
+          title: const Text('Revisão'),
+          backgroundColor: flashcardCanvas,
+          foregroundColor: flashcardNavy,
+        ),
+        body: card == null
+            ? FlashcardEmptyState(
+                icon: Icons.celebration_outlined,
+                title: 'Revisão concluída!',
+                message:
+                    '${viewModel.reviewCompleted} cartão(ões) revisado(s). Volte mais tarde para continuar.',
+                action: FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Voltar ao baralho'),
+                ),
+              )
+            : _ReviewCard(viewModel: viewModel, card: card),
       ),
     );
   }
@@ -150,7 +143,7 @@ class _ReviewCard extends StatelessWidget {
                     Expanded(
                       child: _RatingButton(
                         rating: rating,
-                        card: card,
+                        intervalLabel: viewModel.reviewIntervalLabel(rating),
                         enabled: !viewModel.isSaving,
                         onPressed: () => viewModel.rateCurrentCard(rating),
                       ),
@@ -171,23 +164,18 @@ class _ReviewCard extends StatelessWidget {
 class _RatingButton extends StatelessWidget {
   const _RatingButton({
     required this.rating,
-    required this.card,
+    required this.intervalLabel,
     required this.enabled,
     required this.onPressed,
   });
 
   final FlashcardRating rating;
-  final Flashcard card;
+  final String intervalLabel;
   final bool enabled;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    final interval = const ReviewScheduleCalculator().calculate(
-      card: card,
-      rating: rating,
-      reviewedAt: DateTime.now(),
-    );
     return OutlinedButton(
       onPressed: enabled ? onPressed : null,
       style: OutlinedButton.styleFrom(
@@ -201,19 +189,9 @@ class _RatingButton extends StatelessWidget {
         children: [
           Text(rating.label, textAlign: TextAlign.center),
           const SizedBox(height: 3),
-          Text(
-            _intervalLabel(interval),
-            style: Theme.of(context).textTheme.labelSmall,
-          ),
+          Text(intervalLabel, style: Theme.of(context).textTheme.labelSmall),
         ],
       ),
     );
-  }
-
-  String _intervalLabel(ReviewSchedule schedule) {
-    final duration = schedule.nextReviewAt.difference(DateTime.now());
-    if (duration.inMinutes < 60) return '${duration.inMinutes} min';
-    if (schedule.intervalDays == 1) return '1 dia';
-    return '${schedule.intervalDays} dias';
   }
 }

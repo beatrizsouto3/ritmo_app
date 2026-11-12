@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/models/flashcard_rating.dart';
+
 const Color flashcardCanvas = Color(0xFFF8F9FF);
 const Color flashcardNavy = Color(0xFF001C38);
 const Color flashcardPrimary = Color(0xFF0A4174);
@@ -86,7 +88,7 @@ class FlashcardEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -107,4 +109,13 @@ class FlashcardEmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+extension FlashcardRatingLabel on FlashcardRating {
+  String get label => switch (this) {
+    FlashcardRating.again => 'Errei',
+    FlashcardRating.hard => 'Difícil',
+    FlashcardRating.good => 'Bom',
+    FlashcardRating.easy => 'Fácil',
+  };
 }

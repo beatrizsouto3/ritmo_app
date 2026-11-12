@@ -23,20 +23,4 @@ class FlashcardDeck {
       createdAt: createdAt,
     );
   }
-
-  Map<String, Object?> toMap() => {
-    'id': id,
-    'nome': name,
-    'descricao': description,
-    'criado_em': createdAt.toIso8601String(),
-  };
-
-  factory FlashcardDeck.fromMap(Map<String, Object?> map) {
-    return FlashcardDeck(
-      id: map['id'] as int,
-      name: map['nome'] as String,
-      description: map['descricao'] as String?,
-      createdAt: DateTime.parse(map['criado_em'] as String),
-    );
-  }
 }

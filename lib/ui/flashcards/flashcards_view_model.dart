@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 
-import '../../data/models/flashcard.dart';
-import '../../data/models/flashcard_deck.dart';
-import '../../data/models/flashcard_rating.dart';
+import '../../domain/models/flashcard.dart';
+import '../../domain/models/flashcard_deck.dart';
+import '../../domain/models/flashcard_rating.dart';
+import '../../domain/models/review_schedule.dart';
 import '../../data/repositories/flashcard_repository.dart';
+import '../../data/services/flashcard_service.dart';
 
 class DeckStatistics {
   const DeckStatistics({
@@ -23,11 +25,12 @@ class FlashcardsViewModel extends ChangeNotifier {
   FlashcardsViewModel(this._repository);
 
   final FlashcardRepository _repository;
-  List<FlashcardDeck> _decks = const [];
+  List<FlashcardDeck> _decks = [];
   final Map<int, List<Flashcard>> _cardsByDeck = {};
-  List<Flashcard> _reviewQueue = const [];
+  List<Flashcard> _reviewQueue = [];
   bool _isLoading = false;
   bool _isSaving = false;
+  bool _isDisposed = false;
   bool _isAnswerVisible = false;
   String? _errorMessage;
   String? _notice;
@@ -37,6 +40,7 @@ class FlashcardsViewModel extends ChangeNotifier {
   List<FlashcardDeck> get decks => List.unmodifiable(_decks);
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get isBusy => _isLoading || _isSaving;
   bool get isAnswerVisible => _isAnswerVisible;
   String? get errorMessage => _errorMessage;
   String? get notice => _notice;
@@ -47,7 +51,7 @@ class FlashcardsViewModel extends ChangeNotifier {
       _reviewQueue.isEmpty ? null : _reviewQueue.first;
 
   List<Flashcard> cardsForDeck(int deckId) =>
-      List.unmodifiable(_cardsByDeck[deckId] ?? const []);
+      List.unmodifiable(_cardsByDeck[deckId] ?? []);
 
   FlashcardDeck? deckById(int deckId) {
     for (final deck in _decks) {
@@ -58,228 +62,239 @@ class FlashcardsViewModel extends ChangeNotifier {
 
   DeckStatistics statisticsForDeck(int deckId, {DateTime? at}) {
     final now = at ?? DateTime.now();
-    final cards = _cardsByDeck[deckId] ?? const <Flashcard>[];
+    final cards = _cardsByDeck[deckId] ?? [];
     final due = cards.where((card) => card.isDueAt(now)).length;
-    final newCards = cards
-        .where((card) => card.repetitions == 0 && card.isDueAt(now))
-        .length;
     return DeckStatistics(
       total: cards.length,
       due: due,
-      newCards: newCards,
+      newCards: cards
+          .where((card) => card.repetitions == 0 && card.isDueAt(now))
+          .length,
       retained: cards.length - due,
     );
   }
 
+  String reviewIntervalLabel(FlashcardRating rating) {
+    final card = activeReviewCard;
+    if (card == null) return '';
+    final now = DateTime.now();
+    final schedule = const ReviewScheduleCalculator().calculate(
+      card: card,
+      rating: rating,
+      reviewedAt: now,
+    );
+    if (schedule.intervalDays == 0) {
+      return '${schedule.nextReviewAt.difference(now).inMinutes} min';
+    }
+    return schedule.intervalDays == 1
+        ? '1 dia'
+        : '${schedule.intervalDays} dias';
+  }
+
   Future<void> loadDecks() async {
+    if (_isDisposed || isBusy) return;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _notify();
     try {
-      await _reloadDeckData();
+      final decks = await _repository.getDecks();
+      final cards = await Future.wait(
+        decks.map((deck) => _repository.getCards(deck.id)),
+      );
+      if (_isDisposed) return;
+      _decks = decks;
+      _cardsByDeck.clear();
+      for (var index = 0; index < decks.length; index++) {
+        _cardsByDeck[decks[index].id] = cards[index];
+      }
     } catch (error) {
-      _errorMessage = 'Não foi possível carregar os baralhos: $error';
+      _errorMessage = _messageFor(error);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notify();
     }
   }
 
   Future<void> loadCardsForDeck(int deckId) async {
+    if (_isDisposed || isBusy) return;
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners();
+    _notify();
     try {
-      _cardsByDeck[deckId] = await _repository.getCards(deckId);
+      final cards = await _repository.getCards(deckId);
+      if (!_isDisposed) _cardsByDeck[deckId] = cards;
     } catch (error) {
-      _errorMessage = 'Não foi possível carregar os cartões: $error';
+      _errorMessage = _messageFor(error);
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notify();
     }
   }
 
-  Future<bool> createDeck({required String name, String? description}) async {
-    final normalizedName = name.trim();
-    if (normalizedName.isEmpty) {
-      _errorMessage = 'Informe um nome para o baralho.';
-      notifyListeners();
-      return false;
-    }
-    return _save(() async {
-      await _repository.createDeck(
-        name: normalizedName,
-        description: description,
-      );
-      await _reloadDeckData();
-      _notice = 'Baralho criado.';
-    });
-  }
+  Future<bool> createDeck({required String name, String? description}) =>
+      _save(() async {
+        final deck = await _repository.createDeck(
+          name: name,
+          description: description,
+        );
+        if (_isDisposed) return;
+        _decks = [deck, ..._decks];
+        _cardsByDeck[deck.id] = [];
+        _notice = 'Baralho criado.';
+      });
 
-  Future<bool> updateDeck(FlashcardDeck deck) async {
-    if (deck.name.trim().isEmpty) {
-      _errorMessage = 'Informe um nome para o baralho.';
-      notifyListeners();
-      return false;
-    }
-    return _save(() async {
-      await _repository.updateDeck(deck);
-      await _reloadDeckData();
-      _notice = 'Baralho atualizado.';
-    });
-  }
+  Future<bool> updateDeck(FlashcardDeck deck) => _save(() async {
+    final updated = await _repository.updateDeck(deck);
+    if (_isDisposed) return;
+    _decks = _decks
+        .map((item) => item.id == updated.id ? updated : item)
+        .toList();
+    _notice = 'Baralho atualizado.';
+  });
 
-  Future<bool> deleteDeck(int deckId) async {
-    return _save(() async {
-      await _repository.deleteDeck(deckId);
-      await _reloadDeckData();
-      _notice = 'Baralho excluído.';
-    });
-  }
+  Future<bool> deleteDeck(int deckId) => _save(() async {
+    await _repository.deleteDeck(deckId);
+    if (_isDisposed) return;
+    _decks = _decks.where((deck) => deck.id != deckId).toList();
+    _cardsByDeck.remove(deckId);
+    _notice = 'Baralho excluído.';
+  });
 
   Future<bool> createCard({
     required int deckId,
     required String front,
     required String back,
     String? imageUrl,
-  }) async {
-    if (front.trim().isEmpty || back.trim().isEmpty) {
-      _errorMessage = 'Preencha a frente e o verso do cartão.';
-      notifyListeners();
-      return false;
-    }
-    return _save(() async {
-      await _repository.createCard(
-        deckId: deckId,
-        front: front,
-        back: back,
-        imageUrl: imageUrl,
-      );
-      await _reloadDeckData();
-      _notice = 'Cartão criado. Ele já está pronto para uma revisão.';
-    });
-  }
+  }) => _save(() async {
+    final card = await _repository.createCard(
+      deckId: deckId,
+      front: front,
+      back: back,
+      imageUrl: imageUrl,
+    );
+    if (_isDisposed) return;
+    _cardsByDeck[deckId] = [...cardsForDeck(deckId), card];
+    _notice = 'Cartão criado. Ele já está pronto para uma revisão.';
+  });
 
-  Future<bool> updateCard(Flashcard card) async {
-    if (card.front.trim().isEmpty || card.back.trim().isEmpty) {
-      _errorMessage = 'Preencha a frente e o verso do cartão.';
-      notifyListeners();
-      return false;
-    }
-    return _save(() async {
-      await _repository.updateCard(card);
-      await _reloadDeckData();
-      _notice = 'Cartão atualizado.';
-    });
-  }
+  Future<bool> updateCard(Flashcard card) => _save(() async {
+    final updated = await _repository.updateCard(card);
+    if (_isDisposed) return;
+    _cardsByDeck[updated.deckId] = cardsForDeck(updated.deckId)
+        .map((item) => item.id == updated.id ? updated : item)
+        .toList();
+    _notice = 'Cartão atualizado.';
+  });
 
-  Future<bool> deleteCard(int cardId) async {
-    return _save(() async {
-      await _repository.deleteCard(cardId);
-      await _reloadDeckData();
-      _notice = 'Cartão excluído.';
-    });
-  }
+  Future<bool> deleteCard(int cardId) => _save(() async {
+    await _repository.deleteCard(cardId);
+    if (_isDisposed) return;
+    for (final id in _cardsByDeck.keys.toList()) {
+      _cardsByDeck[id] = cardsForDeck(id)
+          .where((card) => card.id != cardId)
+          .toList();
+    }
+    _notice = 'Cartão excluído.';
+  });
 
   Future<bool> startReview(int deckId, {DateTime? at}) async {
+    if (_isDisposed || isBusy) return false;
     _isLoading = true;
     _errorMessage = null;
     _notice = null;
-    notifyListeners();
+    _notify();
     try {
-      _reviewQueue = await _repository.getDueCards(deckId, at: at);
+      final cards = await _repository.getDueCards(deckId, at: at);
+      if (_isDisposed) return false;
+      _reviewQueue = cards;
       _reviewedCount = 0;
-      _reviewTotal = _reviewQueue.length;
+      _reviewTotal = cards.length;
       _isAnswerVisible = false;
-      if (_reviewQueue.isEmpty) {
-        _notice = 'Não há cartões para revisar agora.';
-        return false;
-      }
-      return true;
+      if (cards.isEmpty) _notice = 'Não há cartões para revisar agora.';
+      return cards.isNotEmpty;
     } catch (error) {
-      _errorMessage = 'Não foi possível iniciar a revisão: $error';
+      _errorMessage = _messageFor(error);
       return false;
     } finally {
       _isLoading = false;
-      notifyListeners();
+      _notify();
     }
   }
 
   void revealAnswer() {
-    if (activeReviewCard == null) return;
+    if (_isDisposed || isBusy || activeReviewCard == null) return;
     _isAnswerVisible = true;
-    notifyListeners();
+    _notify();
   }
 
-  Future<bool> rateCurrentCard(FlashcardRating rating) async {
+  Future<bool> rateCurrentCard(FlashcardRating rating) => _save(() async {
     final card = activeReviewCard;
-    if (card == null || !_isAnswerVisible) return false;
-    _isSaving = true;
-    _errorMessage = null;
-    notifyListeners();
-    try {
-      final review = await _repository.reviewCard(
-        cardId: card.id,
-        rating: rating,
-      );
-      _reviewQueue = _reviewQueue.skip(1).toList();
-      _reviewedCount++;
-      _isAnswerVisible = false;
-      _notice = 'Próxima revisão: ${_formatDateTime(review.nextReviewAt)}.';
-      await _reloadDeckData();
-      return true;
-    } catch (error) {
-      _errorMessage = 'Não foi possível salvar a avaliação: $error';
-      return false;
-    } finally {
-      _isSaving = false;
-      notifyListeners();
+    if (card == null || !_isAnswerVisible) {
+      throw ArgumentError('Revele a resposta antes de avaliar.');
     }
-  }
+    final review = await _repository.reviewCard(
+      cardId: card.id,
+      rating: rating,
+    );
+    if (_isDisposed) return;
+    _cardsByDeck[card.deckId] = cardsForDeck(card.deckId)
+        .map(
+          (item) => item.id == card.id
+              ? item.copyWith(
+                  nextReviewAt: review.nextReviewAt,
+                  intervalDays: review.intervalDays,
+                  repetitions: review.repetitions,
+                )
+              : item,
+        )
+        .toList();
+    _reviewQueue = _reviewQueue.skip(1).toList();
+    _reviewedCount++;
+    _isAnswerVisible = false;
+    final date = review.nextReviewAt.toLocal();
+    _notice = 'Próxima revisão: ${date.day}/${date.month}/${date.year}.';
+  });
 
   void clearMessages() {
     _errorMessage = null;
     _notice = null;
-    notifyListeners();
+    _notify();
   }
 
   Future<bool> _save(Future<void> Function() operation) async {
+    if (_isDisposed || isBusy) return false;
     _isSaving = true;
     _errorMessage = null;
     _notice = null;
-    notifyListeners();
+    _notify();
     try {
       await operation();
-      return true;
+      return !_isDisposed;
     } catch (error) {
-      _errorMessage = 'Não foi possível salvar: $error';
+      _errorMessage = _messageFor(error);
       return false;
     } finally {
       _isSaving = false;
-      notifyListeners();
+      _notify();
     }
   }
 
-  Future<void> _reloadDeckData() async {
-    _decks = await _repository.getDecks();
-    final cardLists = await Future.wait(
-      _decks.map((deck) => _repository.getCards(deck.id)),
-    );
-    _cardsByDeck
-      ..clear()
-      ..addEntries([
-        for (var index = 0; index < _decks.length; index++)
-          MapEntry(_decks[index].id, cardLists[index]),
-      ]);
+  String _messageFor(Object error) {
+    if (error is ArgumentError) return error.message.toString();
+    if (error is FlashcardRequestException) return error.toString();
+    return 'Não foi possível concluir a operação. Confira sua conexão e tente novamente.';
   }
 
-  String _formatDateTime(DateTime value) {
-    final local = value.toLocal();
-    final day = local.day.toString().padLeft(2, '0');
-    final month = local.month.toString().padLeft(2, '0');
-    final year = local.year.toString();
-    final hour = local.hour.toString().padLeft(2, '0');
-    final minute = local.minute.toString().padLeft(2, '0');
-    return '$day/$month/$year às $hour:$minute';
+  void _notify() {
+    if (!_isDisposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _decks = [];
+    _cardsByDeck.clear();
+    _reviewQueue = [];
+    super.dispose();
   }
 }

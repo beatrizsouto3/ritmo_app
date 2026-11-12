@@ -1,19 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../../data/models/flashcard.dart';
+import '../../domain/models/flashcard.dart';
 import 'flashcard_ui_helpers.dart';
 import 'flashcards_view_model.dart';
 
 class FlashcardFormView extends StatefulWidget {
-  const FlashcardFormView({
-    required this.deckId,
-    required this.viewModel,
-    this.card,
-    super.key,
-  });
+  const FlashcardFormView({required this.deckId, this.card, super.key});
 
   final int deckId;
-  final FlashcardsViewModel viewModel;
   final Flashcard? card;
 
   @override
@@ -44,17 +39,18 @@ class _FlashcardFormViewState extends State<FlashcardFormView> {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel = context.watch<FlashcardsViewModel>();
     final isEditing = widget.card != null;
-    return Scaffold(
-      backgroundColor: flashcardCanvas,
-      appBar: AppBar(
-        title: Text(isEditing ? 'Editar cartão' : 'Novo cartão'),
+    return PopScope(
+      canPop: !viewModel.isSaving,
+      child: Scaffold(
         backgroundColor: flashcardCanvas,
-        foregroundColor: flashcardNavy,
-      ),
-      body: ListenableBuilder(
-        listenable: widget.viewModel,
-        builder: (context, _) => Form(
+        appBar: AppBar(
+          title: Text(isEditing ? 'Editar cartão' : 'Novo cartão'),
+          backgroundColor: flashcardCanvas,
+          foregroundColor: flashcardNavy,
+        ),
+        body: Form(
           key: _formKey,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
@@ -69,6 +65,7 @@ class _FlashcardFormViewState extends State<FlashcardFormView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _frontController,
+                enabled: !viewModel.isSaving,
                 minLines: 3,
                 maxLines: 6,
                 maxLength: 500,
@@ -92,6 +89,7 @@ class _FlashcardFormViewState extends State<FlashcardFormView> {
               const SizedBox(height: 8),
               TextFormField(
                 controller: _backController,
+                enabled: !viewModel.isSaving,
                 minLines: 3,
                 maxLines: 8,
                 maxLength: 1000,
@@ -107,6 +105,7 @@ class _FlashcardFormViewState extends State<FlashcardFormView> {
               const SizedBox(height: 14),
               TextFormField(
                 controller: _imageController,
+                enabled: !viewModel.isSaving,
                 keyboardType: TextInputType.url,
                 decoration: const InputDecoration(
                   labelText: 'Imagem (opcional)',
@@ -121,11 +120,11 @@ class _FlashcardFormViewState extends State<FlashcardFormView> {
               ),
               const SizedBox(height: 12),
               FlashcardImagePreview(imageUrl: _imageController.text),
-              FlashcardErrorMessage(widget.viewModel.errorMessage),
+              FlashcardErrorMessage(viewModel.errorMessage),
               const SizedBox(height: 18),
               FilledButton.icon(
-                onPressed: widget.viewModel.isSaving ? null : _save,
-                icon: widget.viewModel.isSaving
+                onPressed: viewModel.isSaving ? null : _save,
+                icon: viewModel.isSaving
                     ? const SizedBox.square(
                         dimension: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
@@ -161,16 +160,17 @@ class _FlashcardFormViewState extends State<FlashcardFormView> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    final viewModel = context.read<FlashcardsViewModel>();
     final imageUrl = _imageController.text.trim();
     final card = widget.card;
     final saved = card == null
-        ? await widget.viewModel.createCard(
+        ? await viewModel.createCard(
             deckId: widget.deckId,
             front: _frontController.text,
             back: _backController.text,
             imageUrl: imageUrl.isEmpty ? null : imageUrl,
           )
-        : await widget.viewModel.updateCard(
+        : await viewModel.updateCard(
             card.copyWith(
               front: _frontController.text.trim(),
               back: _backController.text.trim(),

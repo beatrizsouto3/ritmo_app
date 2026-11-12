@@ -5,3 +5,4 @@
 build/
 .idea/
 *.iml
+config/supabase.json

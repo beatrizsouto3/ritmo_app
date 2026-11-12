@@ -44,30 +44,4 @@ class Flashcard {
       repetitions: repetitions ?? this.repetitions,
     );
   }
-
-  Map<String, Object?> toMap() => {
-    'id': id,
-    'baralho_id': deckId,
-    'frente': front,
-    'verso': back,
-    'imagem_url': imageUrl,
-    'criado_em': createdAt.toIso8601String(),
-    'proxima_revisao_em': nextReviewAt.toIso8601String(),
-    'intervalo_dias': intervalDays,
-    'repeticoes': repetitions,
-  };
-
-  factory Flashcard.fromMap(Map<String, Object?> map) {
-    return Flashcard(
-      id: map['id'] as int,
-      deckId: map['baralho_id'] as int,
-      front: map['frente'] as String,
-      back: map['verso'] as String,
-      imageUrl: map['imagem_url'] as String?,
-      createdAt: DateTime.parse(map['criado_em'] as String),
-      nextReviewAt: DateTime.parse(map['proxima_revisao_em'] as String),
-      intervalDays: map['intervalo_dias'] as int? ?? 0,
-      repetitions: map['repeticoes'] as int? ?? 0,
-    );
-  }
 }
