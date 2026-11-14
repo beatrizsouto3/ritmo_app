@@ -282,7 +282,10 @@ void main() {
     () async {
       final client = MockClient((request) async {
         if (request.url.path.contains('/rpc/')) {
-          return _response({'code': 'P0001'}, status: 400);
+          return _response({
+            'code': 'P0001',
+            'message': 'O cartão foi alterado. Recarregue o baralho.',
+          }, status: 400);
         }
         if (request.url.path.endsWith('/baralhos')) {
           return _response([_deckRow()]);

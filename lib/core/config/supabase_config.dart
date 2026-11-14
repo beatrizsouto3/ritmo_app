@@ -1,3 +1,5 @@
+import '../errors/request_error.dart';
+
 class SupabaseConfig {
   const SupabaseConfig({required this.url, required this.publishableKey});
 
@@ -24,10 +26,12 @@ class SupabaseConfig {
         !baseUri.hasAuthority ||
         !['http', 'https'].contains(baseUri.scheme) ||
         publishableKey.trim().isEmpty) {
-      throw StateError('Configure a URL e a chave pública do Supabase.');
+      throw SupabaseConfigurationException(
+        'Configure a URL e a chave pública do Supabase.',
+      );
     }
     if (publishableKey.startsWith('sb_secret_')) {
-      throw StateError(
+      throw SupabaseConfigurationException(
         'Use somente a chave pública do Supabase no aplicativo.',
       );
     }

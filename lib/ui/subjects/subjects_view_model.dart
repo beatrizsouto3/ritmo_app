@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/errors/request_error.dart';
 import '../../data/repositories/subject_repository.dart';
 import '../../domain/models/subject.dart';
 
@@ -28,8 +29,12 @@ class SubjectsViewModel extends ChangeNotifier {
     try {
       final subjects = await _repository.getSubjects();
       if (!_isDisposed) _subjects = subjects;
-    } catch (_) {
-      _loadError = 'Não foi possível carregar as disciplinas. Tente novamente.';
+    } catch (error, stackTrace) {
+      _loadError = requestErrorMessage(
+        error,
+        stackTrace: stackTrace,
+        fallback: 'Não foi possível carregar as disciplinas. Tente novamente.',
+      );
     } finally {
       _isLoading = false;
       if (!_isDisposed) notifyListeners();
@@ -55,8 +60,12 @@ class SubjectsViewModel extends ChangeNotifier {
       if (_isDisposed) return false;
       _subjects = [..._subjects, subject];
       return true;
-    } catch (_) {
-      _saveError = 'Não foi possível salvar a disciplina. Tente novamente.';
+    } catch (error, stackTrace) {
+      _saveError = requestErrorMessage(
+        error,
+        stackTrace: stackTrace,
+        fallback: 'Não foi possível salvar a disciplina. Tente novamente.',
+      );
       return false;
     } finally {
       _isSaving = false;

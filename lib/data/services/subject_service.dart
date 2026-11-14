@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/supabase_config.dart';
+import '../../core/errors/request_error.dart';
 import 'subject_contract.dart';
 
 class SubjectService {
@@ -59,7 +60,10 @@ class SubjectService {
 
   List<Map<String, Object?>> _decodeRows(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw SubjectRequestException(response.statusCode);
+      throw SubjectRequestException(
+        response.statusCode,
+        responseError: SupabaseError.fromResponse(response),
+      );
     }
     final data = jsonDecode(utf8.decode(response.bodyBytes));
     if (data is! List) {
@@ -71,13 +75,13 @@ class SubjectService {
   }
 }
 
-class SubjectRequestException implements Exception {
-  const SubjectRequestException(this.statusCode);
-
-  final int statusCode;
-
-  @override
-  String toString() {
-    return 'Não foi possível acessar as disciplinas (HTTP $statusCode).';
-  }
+class SubjectRequestException extends SupabaseRequestException {
+  SubjectRequestException(int statusCode, {super.responseError})
+    : super(
+        responseError?.userMessage(
+              'Não foi possível acessar as disciplinas.',
+            ) ??
+            'Não foi possível acessar as disciplinas (HTTP $statusCode).',
+        statusCode: statusCode,
+      );
 }
