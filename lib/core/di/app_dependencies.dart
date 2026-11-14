@@ -5,9 +5,11 @@ import 'package:provider/provider.dart';
 import '../../data/repositories/subject_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/flashcard_repository.dart';
+import '../../data/repositories/topic_repository.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/flashcard_service.dart';
 import '../../data/services/subject_service.dart';
+import '../../data/services/topic_service.dart';
 import '../../ui/subjects/subjects_view_model.dart';
 import '../../ui/auth/auth_view_model.dart';
 import '../../ui/flashcards/flashcards_view_model.dart';
@@ -60,6 +62,14 @@ class AuthenticatedDependencies extends StatelessWidget {
           ),
         ),
         Provider(create: (context) => SubjectRepository(context.read())),
+        Provider(
+          create: (context) => TopicService(
+            config: context.read(),
+            client: context.read(),
+            accessToken: context.read<AuthRepository>().getAccessToken,
+          ),
+        ),
+        Provider(create: (context) => TopicRepository(context.read())),
         ChangeNotifierProvider(
           create: (context) =>
               SubjectsViewModel(context.read())..loadSubjects(),
