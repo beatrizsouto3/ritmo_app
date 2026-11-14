@@ -5,7 +5,9 @@ import '../../domain/models/subject.dart';
 import 'subjects_view_model.dart';
 
 class SubjectForm extends StatefulWidget {
-  const SubjectForm({super.key});
+  const SubjectForm({super.key, this.subject});
+
+  final Subject? subject;
 
   @override
   State<SubjectForm> createState() => _SubjectFormState();
@@ -13,7 +15,13 @@ class SubjectForm extends StatefulWidget {
 
 class _SubjectFormState extends State<SubjectForm> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.subject?.name ?? '');
+  }
 
   @override
   void dispose() {
@@ -23,9 +31,13 @@ class _SubjectFormState extends State<SubjectForm> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    final saved = await context.read<SubjectsViewModel>().createSubject(
-      _nameController.text,
-    );
+    final viewModel = context.read<SubjectsViewModel>();
+    final saved = widget.subject == null
+        ? await viewModel.createSubject(_nameController.text)
+        : await viewModel.updateSubject(
+            subjectId: widget.subject!.id,
+            name: _nameController.text,
+          );
     if (saved && mounted) {
       Navigator.of(context).pop(true);
     }
@@ -38,7 +50,9 @@ class _SubjectFormState extends State<SubjectForm> {
       canPop: !viewModel.isSaving,
       child: AlertDialog(
         scrollable: true,
-        title: const Text('Adicionar disciplina'),
+        title: Text(
+          widget.subject == null ? 'Adicionar disciplina' : 'Editar disciplina',
+        ),
         content: Form(
           key: _formKey,
           child: Column(
@@ -78,7 +92,13 @@ class _SubjectFormState extends State<SubjectForm> {
           ),
           FilledButton(
             onPressed: viewModel.isSaving ? null : _save,
-            child: Text(viewModel.isSaving ? 'Salvando…' : 'Salvar'),
+            child: Text(
+              viewModel.isSaving
+                  ? 'Salvando…'
+                  : widget.subject == null
+                  ? 'Cadastrar'
+                  : 'Salvar alterações',
+            ),
           ),
         ],
       ),

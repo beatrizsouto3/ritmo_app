@@ -73,6 +73,66 @@ class SubjectsViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> updateSubject({
+    required int subjectId,
+    required String name,
+  }) async {
+    if (_isSaving || _isLoading || _loadError != null) return false;
+    _saveError = Subject.validateName(name);
+    if (_saveError != null) {
+      notifyListeners();
+      return false;
+    }
+    _isSaving = true;
+    notifyListeners();
+    try {
+      final updated = await _repository.updateSubject(
+        Subject(id: subjectId, name: name),
+      );
+      if (_isDisposed) return false;
+      _subjects = [
+        for (final current in _subjects)
+          if (current.id == updated.id) updated else current,
+      ];
+      return true;
+    } catch (error, stackTrace) {
+      _saveError = requestErrorMessage(
+        error,
+        stackTrace: stackTrace,
+        fallback: 'Não foi possível atualizar a disciplina. Tente novamente.',
+      );
+      return false;
+    } finally {
+      _isSaving = false;
+      if (!_isDisposed) notifyListeners();
+    }
+  }
+
+  Future<bool> deleteSubject(int subjectId) async {
+    if (_isSaving || _isLoading || _loadError != null) return false;
+    _isSaving = true;
+    _saveError = null;
+    notifyListeners();
+    try {
+      await _repository.deleteSubject(subjectId);
+      if (_isDisposed) return false;
+      _subjects = _subjects
+          .where((subject) => subject.id != subjectId)
+          .toList();
+      return true;
+    } catch (error, stackTrace) {
+      _saveError = requestErrorMessage(
+        error,
+        stackTrace: stackTrace,
+        fallback: 'Não foi possível excluir a disciplina. Tente novamente.',
+      );
+      return false;
+    } finally {
+      _isSaving = false;
+      if (!_isDisposed) notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _isDisposed = true;
