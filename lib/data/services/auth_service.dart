@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/supabase_config.dart';
+import '../../core/errors/request_error.dart';
 import '../../domain/models/auth_session.dart';
 
 class AuthService {
@@ -67,14 +68,8 @@ class AuthService {
         )
         .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      String? code;
-      try {
-        final error = jsonDecode(utf8.decode(response.bodyBytes));
-        if (error is Map) code = error['error_code'] as String?;
-      } on FormatException {
-        code = null;
-      }
-      final message = switch (code) {
+      final responseError = SupabaseError.fromResponse(response);
+      final message = switch (responseError.code) {
         'invalid_credentials' => 'E-mail ou senha incorretos.',
         'email_not_confirmed' => 'Confirme seu e-mail antes de entrar.',
         'email_address_invalid' => 'Informe um e-mail válido.',
@@ -85,9 +80,19 @@ class AuthService {
         'over_email_send_rate_limit' || 'over_request_rate_limit' =>
           'Muitas tentativas. Aguarde alguns minutos e tente novamente.',
         'signup_disabled' => 'O cadastro de contas está indisponível.',
-        _ => 'Não foi possível concluir a autenticação. Tente novamente.',
+        'email_provider_disabled' =>
+          'O login por e-mail está desabilitado no Supabase.',
+        'request_timeout' => 'O Supabase excedeu o tempo para processar a solicitação. Tente novamente.',
+        'unexpected_failure' => 'O Supabase encontrou uma falha interna. Verifique os logs de autenticação no painel.',
+        _ => responseError.userMessage(
+          'Não foi possível concluir a autenticação.',
+        ),
       };
-      throw AuthException(message, statusCode: response.statusCode);
+      throw AuthException(
+        message,
+        statusCode: response.statusCode,
+        responseError: responseError,
+      );
     }
     if (response.bodyBytes.isEmpty) return {};
     final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -98,12 +103,6 @@ class AuthService {
   }
 }
 
-class AuthException implements Exception {
-  const AuthException(this.message, {this.statusCode});
-
-  final String message;
-  final int? statusCode;
-
-  @override
-  String toString() => message;
+class AuthException extends SupabaseRequestException {
+  const AuthException(super.message, {super.statusCode, super.responseError});
 }

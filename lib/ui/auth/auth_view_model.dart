@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/errors/request_error.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/auth_service.dart';
 
@@ -37,9 +38,10 @@ class AuthViewModel extends ChangeNotifier {
     return _run(() async {
       try {
         await _repository.signOut();
-      } catch (_) {
-        throw const AuthException(
-          'Você saiu deste aparelho. Não foi possível encerrar a sessão no servidor.',
+      } catch (error, stackTrace) {
+        throw AuthException(
+          'Você saiu deste aparelho. Não foi possível encerrar a sessão no servidor. '
+          '${requestErrorMessage(error, stackTrace: stackTrace)}',
         );
       }
     });
@@ -60,12 +62,8 @@ class AuthViewModel extends ChangeNotifier {
     try {
       await action();
       return true;
-    } on AuthException catch (error) {
-      _error = error.message;
-      return false;
-    } catch (_) {
-      _error =
-          'Não foi possível conectar. Confira sua internet e tente novamente.';
+    } catch (error, stackTrace) {
+      _error = requestErrorMessage(error, stackTrace: stackTrace);
       return false;
     } finally {
       _isBusy = false;

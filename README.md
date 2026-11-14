@@ -29,3 +29,11 @@ flutter run --dart-define-from-file=config/supabase.json
 flutter analyze
 flutter test
 ```
+
+## Diagnosticar erros
+
+As telas diferenciam falhas de conexão, tempo de espera esgotado, configuração inválida, autenticação, permissões e erros retornados pelo Supabase. Falhas da API sem uma mensagem específica exibem o status HTTP e, quando disponível, o código retornado pelo servidor.
+
+Ao executar em modo de desenvolvimento com `flutter run`, abra a aba Logging do Flutter DevTools e filtre por `ritmo.requests`. Os registros incluem o tipo da exceção e sua origem; para respostas de erro do Supabase, também incluem código, mensagem, detalhes e dica retornados pelo servidor. Cabeçalhos e corpos das requisições não são registrados. Esses registros são desabilitados nas versões de produção.
+
+O código HTTP indica a categoria da resposta, enquanto o código do Supabase identifica a causa com mais precisão. Por exemplo, `HTTP 403; código 42501` indica falta de permissão no banco; verifique as políticas de acesso (RLS). Consulte também os logs de Auth ou Postgres no painel do Supabase para investigar falhas internas do servidor.

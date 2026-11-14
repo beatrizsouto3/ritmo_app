@@ -5,7 +5,7 @@ import '../../domain/models/flashcard_deck.dart';
 import '../../domain/models/flashcard_rating.dart';
 import '../../domain/models/review_schedule.dart';
 import '../../data/repositories/flashcard_repository.dart';
-import '../../data/services/flashcard_service.dart';
+import '../../core/errors/request_error.dart';
 
 class DeckStatistics {
   const DeckStatistics({
@@ -107,8 +107,8 @@ class FlashcardsViewModel extends ChangeNotifier {
       for (var index = 0; index < decks.length; index++) {
         _cardsByDeck[decks[index].id] = cards[index];
       }
-    } catch (error) {
-      _errorMessage = _messageFor(error);
+    } catch (error, stackTrace) {
+      _errorMessage = requestErrorMessage(error, stackTrace: stackTrace);
     } finally {
       _isLoading = false;
       _notify();
@@ -123,8 +123,8 @@ class FlashcardsViewModel extends ChangeNotifier {
     try {
       final cards = await _repository.getCards(deckId);
       if (!_isDisposed) _cardsByDeck[deckId] = cards;
-    } catch (error) {
-      _errorMessage = _messageFor(error);
+    } catch (error, stackTrace) {
+      _errorMessage = requestErrorMessage(error, stackTrace: stackTrace);
     } finally {
       _isLoading = false;
       _notify();
@@ -212,8 +212,8 @@ class FlashcardsViewModel extends ChangeNotifier {
       _isAnswerVisible = false;
       if (cards.isEmpty) _notice = 'Não há cartões para revisar agora.';
       return cards.isNotEmpty;
-    } catch (error) {
-      _errorMessage = _messageFor(error);
+    } catch (error, stackTrace) {
+      _errorMessage = requestErrorMessage(error, stackTrace: stackTrace);
       return false;
     } finally {
       _isLoading = false;
@@ -270,19 +270,13 @@ class FlashcardsViewModel extends ChangeNotifier {
     try {
       await operation();
       return !_isDisposed;
-    } catch (error) {
-      _errorMessage = _messageFor(error);
+    } catch (error, stackTrace) {
+      _errorMessage = requestErrorMessage(error, stackTrace: stackTrace);
       return false;
     } finally {
       _isSaving = false;
       _notify();
     }
-  }
-
-  String _messageFor(Object error) {
-    if (error is ArgumentError) return error.message.toString();
-    if (error is FlashcardRequestException) return error.toString();
-    return 'Não foi possível concluir a operação. Confira sua conexão e tente novamente.';
   }
 
   void _notify() {

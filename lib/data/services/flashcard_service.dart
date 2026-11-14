@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../core/config/supabase_config.dart';
+import '../../core/errors/request_error.dart';
+import 'auth_service.dart';
 import 'flashcard_contract.dart';
 
 class FlashcardService {
@@ -188,7 +190,9 @@ class FlashcardService {
         ? config.rpcUri(resource)
         : config.tableUri(resource, query);
     final token = await accessToken();
-    if (token.isEmpty) throw StateError('Entre na sua conta para continuar.');
+    if (token.isEmpty) {
+      throw const AuthException('Entre na sua conta para continuar.');
+    }
     final request = http.Request(method, uri)
       ..headers.addAll({
         'apikey': config.publishableKey,
@@ -203,14 +207,15 @@ class FlashcardService {
         .then(http.Response.fromStream)
         .timeout(const Duration(seconds: 15));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      var conflict = false;
-      try {
-        final error = jsonDecode(utf8.decode(response.bodyBytes));
-        conflict = error is Map && error['code'] == 'P0001';
-      } on FormatException {
-        conflict = false;
-      }
-      throw FlashcardRequestException(response.statusCode, conflict: conflict);
+      final responseError = SupabaseError.fromResponse(response);
+      throw FlashcardRequestException(
+        response.statusCode,
+        responseError: responseError,
+        conflict:
+            responseError.code == 'P0001' &&
+            responseError.message ==
+                'O cartão foi alterado. Recarregue o baralho.',
+      );
     }
     if (response.bodyBytes.isEmpty) return [];
     final rows = jsonDecode(utf8.decode(response.bodyBytes));
@@ -229,16 +234,35 @@ class FlashcardService {
   }
 }
 
-class FlashcardRequestException implements Exception {
-  const FlashcardRequestException(this.statusCode, {this.conflict = false});
+class FlashcardRequestException extends SupabaseRequestException {
+  const FlashcardRequestException(
+    int statusCode, {
+    this.conflict = false,
+    super.responseError,
+  }) : super('', statusCode: statusCode);
 
-  final int statusCode;
   final bool conflict;
 
   @override
-  String toString() {
+  String get message {
     if (conflict) {
       return 'O cartão foi alterado. Recarregue o baralho antes de revisar.';
+    }
+    if (responseError?.code == 'P0001') {
+      final description = switch (responseError?.message) {
+        'Entre na sua conta para continuar.' =>
+          'Entre na sua conta para continuar.',
+        'O cartão não está disponível para esta conta.' =>
+          'O cartão não está disponível para esta conta.',
+        'Avaliação de revisão inválida.' => 'A avaliação de revisão é inválida. Escolha uma das opções disponíveis.',
+        _ => null,
+      };
+      if (description != null) return description;
+    }
+    if (responseError != null) {
+      return responseError!.userMessage(
+        'Não foi possível acessar os flashcards.',
+      );
     }
     if (statusCode == 404) {
       return 'O registro não foi encontrado ou não está disponível para sua conta.';
