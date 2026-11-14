@@ -63,84 +63,97 @@ class _SubjectsViewState extends State<SubjectsView> {
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Center(
+          heightFactor: 1,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: viewModel.isLoading || viewModel.loadError != null
+                      ? null
+                      : () => _openForm(context),
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Text('Adicionar disciplina'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _ProgressSummary(
-                        count: viewModel.subjects.length,
-                        isLoading: viewModel.isLoading,
-                      ),
-                      const SizedBox(height: 18),
-                      TextField(
-                        controller: _searchController,
-                        onChanged: (value) =>
-                            setState(() => _query = value.trim().toLowerCase()),
-                        decoration: InputDecoration(
-                          hintText: 'Buscar disciplinas…',
-                          prefixIcon: const Icon(Icons.search_rounded),
-                          suffixIcon: _query.isEmpty
-                              ? null
-                              : IconButton(
-                                  tooltip: 'Limpar busca',
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _query = '');
-                                  },
-                                  icon: const Icon(Icons.close_rounded),
-                                ),
-                          filled: true,
-                          fillColor: const Color(0xFFEFF4FF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(28),
-                            borderSide: BorderSide.none,
-                          ),
+            child: CustomScrollView(
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _ProgressSummary(
+                          count: viewModel.subjects.length,
+                          isLoading: viewModel.isLoading,
                         ),
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Suas disciplinas',
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
+                        const SizedBox(height: 18),
+                        TextField(
+                          controller: _searchController,
+                          onChanged: (value) => setState(
+                            () => _query = value.trim().toLowerCase(),
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Buscar disciplinas…',
+                            prefixIcon: const Icon(Icons.search_rounded),
+                            suffixIcon: _query.isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'Limpar busca',
+                                    onPressed: () {
+                                      _searchController.clear();
+                                      setState(() => _query = '');
+                                    },
+                                    icon: const Icon(Icons.close_rounded),
+                                  ),
+                            filled: true,
+                            fillColor: const Color(0xFFEFF4FF),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(28),
+                              borderSide: BorderSide.none,
                             ),
                           ),
-                          Text(
-                            '${viewModel.subjects.length}',
-                            style: Theme.of(context).textTheme.labelLarge
-                                ?.copyWith(color: const Color(0xFF33628A)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(child: _buildContent(context, viewModel, subjects)),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed:
-                          viewModel.isLoading || viewModel.loadError != null
-                          ? null
-                          : () => _openForm(context),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        child: Text('Adicionar disciplina'),
-                      ),
+                        ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Suas disciplinas',
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            Text(
+                              '${viewModel.subjects.length}',
+                              style: Theme.of(context).textTheme.labelLarge
+                                  ?.copyWith(color: const Color(0xFF33628A)),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
+                ),
+                SliverToBoxAdapter(
+                  child: _buildContent(context, viewModel, subjects),
                 ),
               ],
             ),
@@ -216,6 +229,8 @@ class _SubjectsViewState extends State<SubjectsView> {
       );
     }
     return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
       itemCount: subjects.length,
       separatorBuilder: (_, _) => const SizedBox(height: 10),

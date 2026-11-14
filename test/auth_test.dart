@@ -214,9 +214,12 @@ void main() {
           child: const MaterialApp(home: AuthView()),
         ),
       );
-      await tester.tap(find.text('Criar uma conta'));
+      await tester.tap(find.widgetWithText(TextButton, 'Criar conta'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Criar conta'));
+      await tester.ensureVisible(
+        find.widgetWithText(FilledButton, 'Criar conta'),
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Criar conta'));
       await tester.pumpAndSettle();
       expect(find.text('Informe um e-mail válido.'), findsOneWidget);
       expect(calls, 0);
@@ -225,8 +228,13 @@ void main() {
         'davi@example.com',
       );
       await tester.enterText(find.byType(TextFormField).at(1), 'test-password');
-      await tester.ensureVisible(find.text('Criar conta'));
-      await tester.tap(find.text('Criar conta'));
+      await tester.ensureVisible(
+        find.widgetWithText(FilledButton, 'Criar conta'),
+      );
+      await tester.ensureVisible(
+        find.widgetWithText(FilledButton, 'Criar conta'),
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Criar conta'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Confira seu e-mail'), findsOneWidget);
       expect(viewModel.isAuthenticated, isFalse);

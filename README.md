@@ -7,7 +7,7 @@ Cadastro e login por e-mail, disciplinas e flashcards com revisão espaçada por
 ## Configuração
 
 1. Copie [config/supabase.example.json](config/supabase.example.json) para `config/supabase.json` e preencha a URL e a chave pública do projeto.
-2. No SQL Editor, execute [schema.sql](supabase/schema.sql) em um projeto novo e depois, nesta ordem, as migrações de [flashcards](supabase/migrations/202611120001_flashcards.sql) e [tópicos](supabase/migrations/202611140001_topics.sql). Se disciplinas já estiverem configuradas, execute apenas as migrações que ainda não foram aplicadas.
+2. No SQL Editor, execute [schema.sql](supabase/schema.sql) em um projeto novo e depois, nesta ordem, as migrações de [flashcards](supabase/migrations/202611120001_flashcards.sql) e [tópicos](supabase/migrations/202611140001_topics.sql), seguidas de [preferências e sessões](supabase/migrations/202611140002_study_preferences_sessions.sql). Se disciplinas já estiverem configuradas, execute apenas as migrações que ainda não foram aplicadas.
 3. Habilite autenticação por e-mail e confirmação de cadastro.
 4. Em **Authentication → URL Configuration**, configure **Site URL** como `br.ufrn.ritmo://login-callback`. Assim, o link de confirmação abre o aplicativo Android, onde o usuário entra com e-mail e senha. Instale novamente o app após alterar o `AndroidManifest.xml`.
 
@@ -38,3 +38,25 @@ As telas diferenciam falhas de conexão, tempo de espera esgotado, configuraçã
 Ao executar em modo de desenvolvimento com `flutter run`, abra a aba Logging do Flutter DevTools e filtre por `ritmo.requests`. Os registros incluem o tipo da exceção e sua origem; para respostas de erro do Supabase, também incluem código, mensagem, detalhes e dica retornados pelo servidor. Cabeçalhos e corpos das requisições não são registrados. Esses registros são desabilitados nas versões de produção.
 
 O código HTTP indica a categoria da resposta, enquanto o código do Supabase identifica a causa com mais precisão. Por exemplo, `HTTP 403; código 42501` indica falta de permissão no banco; verifique as políticas de acesso (RLS). Consulte também os logs de Auth ou Postgres no painel do Supabase para investigar falhas internas do servidor.
+
+## Telas de estudo
+
+Após a autenticação, o Dashboard oferece configuração inicial em três passos
+(meta e matérias → dias e turno → resumo), edição de perfil de estudos,
+Pomodoro, disciplinas/tópicos, flashcards e métricas de tempo.
+Aplique também [a migração de preferências e sessões](supabase/migrations/202611140002_study_preferences_sessions.sql)
+após as migrações anteriores para persistir perfil, rotina e ciclos de foco.
+
+O Pomodoro admite foco e pausas configuráveis. Pausar congela o contador;
+bloquear a tela mantém o tempo ativo. Sair da tela exige confirmação e descarta
+um ciclo incompleto; encerrar o processo do app também descarta esse ciclo.
+Apenas um foco concluído gera registro. Falhas ao gravar oferecem nova tentativa
+com o mesmo identificador para impedir registros duplicados.
+
+Os dois resumos finais do Stitch são variantes de uma mesma etapa, implementada
+como um resumo único com as escolhas atuais. Sons, bloqueio de notificações,
+alertas do sistema, troca de e-mail/senha e upload de avatar não estão incluídos
+nesta integração. Perfil edita nome e preferências de estudo. A rotina semanal
+representa disponibilidade, não sessões individuais agendadas. Métricas exibem
+somente tempo real de foco; questões e sugestões por desempenho continuam
+como funcionalidades futuras.

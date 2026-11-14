@@ -14,6 +14,9 @@ import '../../ui/subjects/subjects_view_model.dart';
 import '../../ui/auth/auth_view_model.dart';
 import '../../ui/flashcards/flashcards_view_model.dart';
 import '../config/supabase_config.dart';
+import '../../data/services/study_service.dart';
+import '../../data/repositories/study_repository.dart';
+import '../../ui/study/study_view_model.dart';
 
 class AppDependencies extends StatelessWidget {
   const AppDependencies({super.key, required this.child});
@@ -54,6 +57,18 @@ class AuthenticatedDependencies extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        Provider(
+          create: (context) => StudyService(
+            config: context.read(),
+            client: context.read(),
+            accessToken: context.read<AuthRepository>().getAccessToken,
+            userId: () => context.read<AuthRepository>().userId!,
+          ),
+        ),
+        Provider(create: (context) => StudyRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => StudyViewModel(context.read())..load(),
+        ),
         Provider(
           create: (context) => SubjectService(
             config: context.read(),

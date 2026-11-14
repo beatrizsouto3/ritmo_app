@@ -190,7 +190,7 @@ void main() {
         child: const MaterialApp(home: SubjectsView()),
       ),
     );
-    expect(find.text('Nenhuma disciplina cadastrada'), findsOneWidget);
+    expect(find.text('Sua lista começa aqui'), findsOneWidget);
     await tester.tap(find.text('Adicionar disciplina'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '   ');
@@ -208,7 +208,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Matemática'), findsOneWidget);
     expect(find.text('Disciplina cadastrada.'), findsOneWidget);
-    expect(find.text('Nenhuma disciplina cadastrada'), findsNothing);
+    expect(find.text('Sua lista começa aqui'), findsNothing);
   });
 
   testWidgets('failed save keeps the name for retry on a small screen', (
