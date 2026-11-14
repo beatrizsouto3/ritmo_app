@@ -12,6 +12,9 @@ class TopicRepository {
     return (await _service.fetchTopics(subjectId)).map(_fromRow).toList();
   }
 
+  Future<List<StudyTopic>> getAllTopics() async =>
+      (await _service.fetchAllTopics()).map(_fromRow).toList();
+
   Future<StudyTopic> createTopic({
     required int subjectId,
     required String name,

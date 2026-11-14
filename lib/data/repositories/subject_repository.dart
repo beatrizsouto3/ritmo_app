@@ -28,4 +28,18 @@ class SubjectRepository {
     final id = await _service.createSubject(normalizedName);
     return Subject(id: id, name: normalizedName);
   }
+
+  Future<Subject> updateSubject(Subject subject) async {
+    if (subject.id <= 0) throw ArgumentError.value(subject.id, 'id');
+    final error = Subject.validateName(subject.name);
+    if (error != null) throw ArgumentError(error);
+    final name = subject.name.trim();
+    await _service.updateSubject(subject.id, name);
+    return Subject(id: subject.id, name: name);
+  }
+
+  Future<void> deleteSubject(int id) {
+    if (id <= 0) throw ArgumentError.value(id, 'id');
+    return _service.deleteSubject(id);
+  }
 }

@@ -58,6 +58,37 @@ class SubjectService {
     return rows.single[SubjectContract.idColumn] as int;
   }
 
+  Future<void> updateSubject(int id, String name) async {
+    final response = await client
+        .patch(
+          config.tableUri(SubjectContract.table, {
+            SubjectContract.idColumn: 'eq.$id',
+            'select': SubjectContract.idColumn,
+          }),
+          headers: {...await _headers, 'Prefer': 'return=representation'},
+          body: jsonEncode({SubjectContract.nameColumn: name}),
+        )
+        .timeout(const Duration(seconds: 15));
+    if (_decodeRows(response).length != 1) {
+      throw const FormatException('Disciplina não encontrada.');
+    }
+  }
+
+  Future<void> deleteSubject(int id) async {
+    final response = await client
+        .delete(
+          config.tableUri(SubjectContract.table, {
+            SubjectContract.idColumn: 'eq.$id',
+            'select': SubjectContract.idColumn,
+          }),
+          headers: {...await _headers, 'Prefer': 'return=representation'},
+        )
+        .timeout(const Duration(seconds: 15));
+    if (_decodeRows(response).length != 1) {
+      throw const FormatException('Disciplina não encontrada.');
+    }
+  }
+
   List<Map<String, Object?>> _decodeRows(http.Response response) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw SubjectRequestException(

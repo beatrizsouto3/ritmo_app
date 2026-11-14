@@ -37,6 +37,19 @@ class TopicService {
     return _decodeRows(response);
   }
 
+  Future<List<Map<String, Object?>>> fetchAllTopics() async {
+    final response = await client
+        .get(
+          config.tableUri(TopicContract.table, const {
+            'select': '*',
+            'order': 'disciplina_id.asc,ordem.asc,id.asc',
+          }),
+          headers: await _headers,
+        )
+        .timeout(const Duration(seconds: 15));
+    return _decodeRows(response);
+  }
+
   Future<Map<String, Object?>> createTopic({
     required int subjectId,
     required String name,
