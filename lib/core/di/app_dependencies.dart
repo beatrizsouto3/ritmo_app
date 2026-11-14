@@ -6,10 +6,13 @@ import '../../data/repositories/subject_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/flashcard_repository.dart';
 import '../../data/repositories/topic_repository.dart';
+import '../../data/repositories/planned_session_repository.dart';
+import '../../data/repositories/question_repository.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/services/flashcard_service.dart';
 import '../../data/services/subject_service.dart';
 import '../../data/services/topic_service.dart';
+import '../../data/services/planning_service.dart';
 import '../../ui/subjects/subjects_view_model.dart';
 import '../../ui/auth/auth_view_model.dart';
 import '../../ui/flashcards/flashcards_view_model.dart';
@@ -17,6 +20,7 @@ import '../config/supabase_config.dart';
 import '../../data/services/study_service.dart';
 import '../../data/repositories/study_repository.dart';
 import '../../ui/study/study_view_model.dart';
+import '../../ui/dashboard/dashboard_metrics_view_model.dart';
 
 class AppDependencies extends StatelessWidget {
   const AppDependencies({super.key, required this.child});
@@ -85,6 +89,22 @@ class AuthenticatedDependencies extends StatelessWidget {
           ),
         ),
         Provider(create: (context) => TopicRepository(context.read())),
+        Provider(
+          create: (context) => PlanningService(
+            config: context.read(),
+            client: context.read(),
+            accessToken: context.read<AuthRepository>().getAccessToken,
+          ),
+        ),
+        Provider(create: (context) => PlannedSessionRepository(context.read())),
+        Provider(create: (context) => QuestionRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => DashboardMetricsViewModel(
+            context.read(),
+            context.read(),
+            context.read(),
+          )..load(),
+        ),
         ChangeNotifierProvider(
           create: (context) =>
               SubjectsViewModel(context.read())..loadSubjects(),

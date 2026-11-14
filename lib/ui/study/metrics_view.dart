@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../common/study_layout.dart';
 import '../subjects/subjects_view_model.dart';
 import 'study_view_model.dart';
+import '../dashboard/dashboard_metrics_view_model.dart';
 
 class MetricsView extends StatelessWidget {
   const MetricsView({super.key});
@@ -12,6 +13,7 @@ class MetricsView extends StatelessWidget {
     final vm = context.watch<StudyViewModel>();
     final subjects = context.watch<SubjectsViewModel>().subjects;
     final totals = vm.secondsBySubject;
+    final dashboard = context.watch<DashboardMetricsViewModel>();
     final maximum = totals.values.fold<int>(1, (max, n) => n > max ? n : max);
     return StudyLayout(
       title: 'Métricas de estudo',
@@ -79,6 +81,33 @@ class MetricsView extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+        StudyPanel(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Desempenho em questões',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                dashboard.accuracy == null
+                    ? 'Ainda não há questões registradas.'
+                    : '${(dashboard.accuracy! * 100).round()}% de acerto em ${dashboard.totalQuestions} questões.',
+              ),
+              for (final record in dashboard.records.take(10))
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    '${record.correct}/${record.total} acertos · ${(record.accuracy * 100).round()}%',
+                  ),
+                  subtitle: Text(
+                    record.recordedAt.toLocal().toString().substring(0, 16),
                   ),
                 ),
             ],

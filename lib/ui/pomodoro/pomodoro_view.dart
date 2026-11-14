@@ -182,6 +182,11 @@ class _TimerScreen extends StatelessWidget {
                     ),
                   ],
                 ),
+                if (vm.mode != FocusMode.focus && !vm.needsSave)
+                  TextButton(
+                    onPressed: vm.saving ? null : vm.skipBreak,
+                    child: const Text('Pular pausa'),
+                  ),
                 const SizedBox(height: 16),
                 const Text(
                   'O timer continua ao bloquear a tela. Ao fechar o aplicativo, o ciclo incompleto é descartado.',

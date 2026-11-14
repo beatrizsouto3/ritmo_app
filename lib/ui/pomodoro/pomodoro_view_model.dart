@@ -94,6 +94,15 @@ class PomodoroViewModel extends ChangeNotifier {
     _notify();
   }
 
+  void skipBreak() {
+    if (mode == FocusMode.focus || saving || needsSave) return;
+    _pause();
+    _elapsedMicros = 0;
+    mode = FocusMode.focus;
+    error = null;
+    _notify();
+  }
+
   Future<void> _finish() async {
     _pause();
     if (mode != FocusMode.focus) {

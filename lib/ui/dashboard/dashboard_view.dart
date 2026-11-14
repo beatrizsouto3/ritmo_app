@@ -9,6 +9,7 @@ import '../study/study_view_model.dart';
 import '../flashcards/flashcards_view.dart';
 import '../subjects/subjects_view.dart';
 import '../subjects/subjects_view_model.dart';
+import 'dashboard_metrics_view_model.dart';
 
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
@@ -16,7 +17,12 @@ class DashboardView extends StatelessWidget {
   Future<void> _open(BuildContext context, Widget page) async {
     await Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => page));
-    if (context.mounted) await context.read<StudyViewModel>().load();
+    if (context.mounted) {
+      await context.read<StudyViewModel>().load();
+      if (context.mounted) {
+        await context.read<DashboardMetricsViewModel>().load();
+      }
+    }
   }
 
   @override
@@ -25,6 +31,9 @@ class DashboardView extends StatelessWidget {
     final auth = context.watch<AuthViewModel>();
     final colors = Theme.of(context).colorScheme;
     final study = context.watch<StudyViewModel>();
+    final metrics = context.watch<DashboardMetricsViewModel>();
+    final urgent = metrics.urgentTopics(DateTime.now());
+    final today = metrics.sessionsToday(DateTime.now());
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
@@ -81,6 +90,14 @@ class DashboardView extends StatelessWidget {
                           child: const Text('Tentar carregar preferências'),
                         ),
                       ],
+                    ),
+                  ),
+                if (metrics.busy) const LinearProgressIndicator(),
+                if (metrics.error != null)
+                  TextButton(
+                    onPressed: metrics.load,
+                    child: Text(
+                      'Dados de questões/cronograma: ${metrics.error} · Tentar novamente',
                     ),
                   ),
                 if (!study.preferences.configured)
@@ -167,6 +184,51 @@ class DashboardView extends StatelessWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                _SummaryCard(
+                  icon: Icons.fact_check_outlined,
+                  title: 'Acerto em questões',
+                  value: !metrics.loaded
+                      ? 'Indisponível'
+                      : metrics.accuracy == null
+                      ? 'Sem questões registradas'
+                      : '${(metrics.accuracy! * 100).round()}% · ${metrics.totalQuestions} questões',
+                  color: colors.tertiaryContainer,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Cronograma de hoje',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                if (metrics.loaded && today.isEmpty)
+                  const Text('Nenhuma sessão planejada para hoje.'),
+                for (final session in today)
+                  ListTile(
+                    title: Text(
+                      subjects.subjects
+                              .where(
+                                (subject) => subject.id == session.subjectId,
+                              )
+                              .map((subject) => subject.name)
+                              .firstOrNull ??
+                          'Disciplina',
+                    ),
+                    subtitle: Text(
+                      '${TimeOfDay.fromDateTime(session.startsAt.toLocal()).format(context)} – ${TimeOfDay.fromDateTime(session.endsAt.toLocal()).format(context)}',
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                Text(
+                  'Tópicos para revisar',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                if (metrics.loaded && urgent.isEmpty)
+                  const Text('Nenhum tópico urgente com questões registradas.'),
+                for (final item in urgent.take(5))
+                  ListTile(
+                    title: Text(item.topic.name),
+                    subtitle: Text(item.reason),
+                  ),
                 if (subjects.loadError != null) ...[
                   const SizedBox(height: 12),
                   TextButton.icon(
