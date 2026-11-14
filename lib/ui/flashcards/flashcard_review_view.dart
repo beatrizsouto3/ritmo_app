@@ -49,11 +49,23 @@ class _ReviewCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final completed = viewModel.reviewCompleted;
     final total = viewModel.reviewTotal;
+    final stats = viewModel.statisticsForDeck(card.deckId);
+    final deckName =
+        viewModel.deckById(card.deckId)?.name ?? 'Revisão de cartões';
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                deckName,
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -69,7 +81,26 @@ class _ReviewCard extends StatelessWidget {
                 Text('$completed/$total'),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Chip(
+                  label: Text('${stats.newCards} novos'),
+                  avatar: const Icon(Icons.add_circle_outline, size: 16),
+                ),
+                Chip(
+                  label: Text('${stats.due} a revisar'),
+                  avatar: const Icon(Icons.schedule, size: 16),
+                ),
+                Chip(
+                  label: Text('${stats.retained} agendados'),
+                  avatar: const Icon(Icons.event_available, size: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Expanded(
               child: Center(
                 child: SingleChildScrollView(

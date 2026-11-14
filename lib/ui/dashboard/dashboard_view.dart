@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../auth/auth_view_model.dart';
+import '../pomodoro/pomodoro_view.dart';
+import '../study/preferences_view.dart';
+import '../study/metrics_view.dart';
+import '../study/study_view_model.dart';
 import '../flashcards/flashcards_view.dart';
 import '../subjects/subjects_view.dart';
 import '../subjects/subjects_view_model.dart';
@@ -9,8 +13,10 @@ import '../subjects/subjects_view_model.dart';
 class DashboardView extends StatelessWidget {
   const DashboardView({super.key});
 
-  void _open(BuildContext context, Widget page) {
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  Future<void> _open(BuildContext context, Widget page) async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => page));
+    if (context.mounted) await context.read<StudyViewModel>().load();
   }
 
   @override
@@ -18,6 +24,7 @@ class DashboardView extends StatelessWidget {
     final subjects = context.watch<SubjectsViewModel>();
     final auth = context.watch<AuthViewModel>();
     final colors = Theme.of(context).colorScheme;
+    final study = context.watch<StudyViewModel>();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
@@ -25,6 +32,11 @@ class DashboardView extends StatelessWidget {
         backgroundColor: const Color(0xFFF8F9FF),
         title: const Text('Ritmo'),
         actions: [
+          IconButton(
+            tooltip: 'Editar perfil',
+            icon: const Icon(Icons.person_outline_rounded),
+            onPressed: () => _open(context, const PreferencesView()),
+          ),
           IconButton(
             tooltip: 'Sair da conta',
             onPressed: auth.isBusy ? null : auth.signOut,
@@ -42,7 +54,9 @@ class DashboardView extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
               children: [
                 Text(
-                  'Seu espaço de estudos',
+                  study.preferences.name.trim().isEmpty
+                      ? 'Seu espaço de estudos'
+                      : 'Olá, ${study.preferences.name.trim()}!',
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: const Color(0xFF002B52),
                     fontWeight: FontWeight.w700,
@@ -51,11 +65,33 @@ class DashboardView extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   'Organize sua rotina e continue no seu ritmo.',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: const Color(0xFF42474F),
-                  ),
+                  style: Theme.of(context).textTheme.bodyLarge
+                      ?.copyWith(color: const Color(0xFF42474F)),
                 ),
                 const SizedBox(height: 22),
+                if (study.busy) const LinearProgressIndicator(),
+                if (study.error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Column(
+                      children: [
+                        Text(study.error!),
+                        TextButton(
+                          onPressed: study.load,
+                          child: const Text('Tentar carregar preferências'),
+                        ),
+                      ],
+                    ),
+                  ),
+                if (!study.preferences.configured)
+                  _FeatureTile(
+                    icon: Icons.tune_rounded,
+                    title: 'Encontre seu ritmo',
+                    subtitle: 'Configure sua meta, matérias e horários',
+                    onTap: () =>
+                        _open(context, const PreferencesView(onboarding: true)),
+                  ),
+                const SizedBox(height: 16),
                 _WelcomeCard(
                   subjectCount: subjects.subjects.length,
                   isLoading: subjects.isLoading,
@@ -64,9 +100,8 @@ class DashboardView extends StatelessWidget {
                 const SizedBox(height: 20),
                 Text(
                   'Continue por aqui',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
                 _FeatureTile(
@@ -86,12 +121,25 @@ class DashboardView extends StatelessWidget {
                   subtitle: 'Crie baralhos e revise seus cartões',
                   onTap: () => _open(context, const FlashcardsView()),
                 ),
+                const SizedBox(height: 10),
+                _FeatureTile(
+                  icon: Icons.timer_outlined,
+                  title: 'Pomodoro',
+                  subtitle: 'Foco, pausas e tempo líquido por disciplina',
+                  onTap: () => _open(context, const PomodoroView()),
+                ),
+                const SizedBox(height: 10),
+                _FeatureTile(
+                  icon: Icons.insights_outlined,
+                  title: 'Métricas',
+                  subtitle: 'Acompanhe seus ciclos e horas de estudo',
+                  onTap: () => _open(context, const MetricsView()),
+                ),
                 const SizedBox(height: 22),
                 Text(
                   'Seu resumo',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -100,7 +148,9 @@ class DashboardView extends StatelessWidget {
                       child: _SummaryCard(
                         icon: Icons.timer_outlined,
                         title: 'Tempo estudado',
-                        value: 'Sem registros',
+                        value: study.loaded
+                            ? '${(study.totalSeconds / 3600).toStringAsFixed(1)} h'
+                            : 'Indisponível',
                         color: colors.primaryContainer,
                       ),
                     ),
@@ -108,8 +158,10 @@ class DashboardView extends StatelessWidget {
                     Expanded(
                       child: _SummaryCard(
                         icon: Icons.event_note_rounded,
-                        title: 'Próxima sessão',
-                        value: 'Cronograma em breve',
+                        title: 'Meta diária',
+                        value: study.loaded
+                            ? '${study.preferences.dailyHours} h · ${study.preferences.shift}'
+                            : 'Indisponível',
                         color: colors.secondaryContainer,
                       ),
                     ),
@@ -137,6 +189,10 @@ class DashboardView extends StatelessWidget {
             label: 'Início',
           ),
           NavigationDestination(
+            icon: Icon(Icons.timer_outlined),
+            label: 'Foco',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.style_outlined),
             selectedIcon: Icon(Icons.style_rounded),
             label: 'Flashcards',
@@ -146,10 +202,16 @@ class DashboardView extends StatelessWidget {
             selectedIcon: Icon(Icons.menu_book_rounded),
             label: 'Disciplinas',
           ),
+          NavigationDestination(
+            icon: Icon(Icons.insights_outlined),
+            label: 'Métricas',
+          ),
         ],
         onDestinationSelected: (index) {
-          if (index == 1) _open(context, const FlashcardsView());
-          if (index == 2) _open(context, const SubjectsView());
+          if (index == 1) _open(context, const PomodoroView());
+          if (index == 2) _open(context, const FlashcardsView());
+          if (index == 3) _open(context, const SubjectsView());
+          if (index == 4) _open(context, const MetricsView());
         },
       ),
     );
@@ -190,10 +252,8 @@ class _WelcomeCard extends StatelessWidget {
                 : subjectCount == 0
                 ? 'Vamos começar?'
                 : 'Você está construindo constância.',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           Text(
@@ -202,15 +262,16 @@ class _WelcomeCard extends StatelessWidget {
                 : subjectCount == 0
                 ? 'Cadastre uma disciplina para organizar seus estudos.'
                 : 'Suas disciplinas já estão prontas para o próximo estudo.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.white.withValues(alpha: 0.86),
-            ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: Colors.white.withValues(alpha: 0.86)),
           ),
           const SizedBox(height: 18),
           FilledButton.tonalIcon(
             onPressed: onOpenSubjects,
             icon: const Icon(Icons.arrow_forward_rounded),
-            label: Text(subjectCount == 0 ? 'Adicionar disciplina' : 'Ver disciplinas'),
+            label: Text(
+              subjectCount == 0 ? 'Adicionar disciplina' : 'Ver disciplinas',
+            ),
           ),
         ],
       ),
