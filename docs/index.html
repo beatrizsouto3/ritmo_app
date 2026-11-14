@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="referrer" content="no-referrer" />
+    <title>Confirmação de e-mail · Ritmo</title>
+    <style>
+      :root { color-scheme: light; font-family: system-ui, sans-serif; }
+      body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: #f8f9ff; color: #001c38; }
+      main { width: min(100% - 3rem, 30rem); padding: 2rem; border-radius: 1.25rem; background: white; box-shadow: 0 12px 40px #001c3814; }
+      h1 { color: #0a4174; margin-top: 0; }
+      p { line-height: 1.6; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1 id="title">Confirmação de e-mail</h1>
+      <p id="message">Verificando o retorno do cadastro…</p>
+    </main>
+    <script>
+      const query = new URLSearchParams(window.location.search);
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      const error = query.get('error') || fragment.get('error') || query.get('error_code') || fragment.get('error_code');
+      const confirmed = fragment.has('access_token');
+      const title = document.getElementById('title');
+      const message = document.getElementById('message');
+
+      window.history.replaceState(null, '', window.location.pathname);
+
+      if (error) {
+        title.textContent = 'Não foi possível confirmar o e-mail';
+        message.textContent = 'O link pode ter expirado ou já ter sido utilizado. Tente entrar no Ritmo. Se o app ainda pedir confirmação, será necessário enviar um novo link de confirmação.';
+      } else if (confirmed) {
+        title.textContent = 'E-mail confirmado';
+        message.textContent = 'Abra o aplicativo Ritmo e entre com seu e-mail e senha. Você já pode fechar esta página.';
+      } else {
+        message.textContent = 'Se você abriu o link do e-mail, tente entrar no aplicativo Ritmo com seu e-mail e senha.';
+      }
+    </script>
+  </body>
+</html>
