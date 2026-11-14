@@ -204,6 +204,10 @@ class DashboardView extends StatelessWidget {
                   const Text('Nenhuma sessão planejada para hoje.'),
                 for (final session in today)
                   ListTile(
+                    onTap: () => _open(
+                      context,
+                      PomodoroView(initialSubjectId: session.subjectId),
+                    ),
                     title: Text(
                       subjects.subjects
                               .where(
@@ -216,6 +220,7 @@ class DashboardView extends StatelessWidget {
                     subtitle: Text(
                       '${TimeOfDay.fromDateTime(session.startsAt.toLocal()).format(context)} – ${TimeOfDay.fromDateTime(session.endsAt.toLocal()).format(context)}',
                     ),
+                    trailing: const Icon(Icons.play_arrow_rounded),
                   ),
                 const SizedBox(height: 16),
                 Text(

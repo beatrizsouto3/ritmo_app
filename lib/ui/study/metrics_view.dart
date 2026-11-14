@@ -14,6 +14,7 @@ class MetricsView extends StatelessWidget {
     final subjects = context.watch<SubjectsViewModel>().subjects;
     final totals = vm.secondsBySubject;
     final dashboard = context.watch<DashboardMetricsViewModel>();
+    final dailyAccuracy = dashboard.dailyAccuracy(DateTime.now());
     final maximum = totals.values.fold<int>(1, (max, n) => n > max ? n : max);
     return StudyLayout(
       title: 'Métricas de estudo',
@@ -99,6 +100,43 @@ class MetricsView extends StatelessWidget {
                 dashboard.accuracy == null
                     ? 'Ainda não há questões registradas.'
                     : '${(dashboard.accuracy! * 100).round()}% de acerto em ${dashboard.totalQuestions} questões.',
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Evolução nos últimos 30 dias',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              if (dashboard.busy) const LinearProgressIndicator(),
+              if (dashboard.error != null)
+                TextButton(
+                  onPressed: dashboard.load,
+                  child: const Text(
+                    'Não foi possível carregar as questões. Tentar novamente',
+                  ),
+                ),
+              if (dashboard.loaded && dailyAccuracy.isEmpty)
+                const Text('Nenhuma questão registrada nesse período.'),
+              for (final day in dailyAccuracy)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        '${day.day.day.toString().padLeft(2, '0')}/${day.day.month.toString().padLeft(2, '0')} · ${day.correct}/${day.total} acertos · ${(day.accuracy * 100).round()}%',
+                      ),
+                      const SizedBox(height: 4),
+                      LinearProgressIndicator(
+                        value: day.accuracy,
+                        minHeight: 8,
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Text(
+                'Últimos lançamentos',
+                style: Theme.of(context).textTheme.titleMedium,
               ),
               for (final record in dashboard.records.take(10))
                 ListTile(

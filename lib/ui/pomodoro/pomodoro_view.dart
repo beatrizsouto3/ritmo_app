@@ -8,12 +8,16 @@ import '../subjects/subjects_view_model.dart';
 import 'pomodoro_view_model.dart';
 
 class PomodoroView extends StatelessWidget {
-  const PomodoroView({super.key});
+  const PomodoroView({super.key, this.initialSubjectId});
+
+  final int? initialSubjectId;
+
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
     create: (context) => PomodoroViewModel(
       context.read<StudyRepository>(),
       context.read<StudyViewModel>().preferences,
+      initialSubjectId: initialSubjectId,
     ),
     child: const _TimerScreen(),
   );
@@ -44,6 +48,10 @@ class _TimerScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<PomodoroViewModel>();
     final subjects = context.watch<SubjectsViewModel>();
+    final selectedSubjectId =
+        subjects.subjects.any((subject) => subject.id == vm.subjectId)
+        ? vm.subjectId
+        : null;
     return PopScope(
       canPop: !vm.hasStarted && !vm.saving,
       onPopInvokedWithResult: (didPop, result) async {
@@ -83,7 +91,8 @@ class _TimerScreen extends StatelessWidget {
           const SizedBox(height: 16),
           StudyPanel(
             child: DropdownButtonFormField<int>(
-              initialValue: vm.subjectId,
+              key: ValueKey(selectedSubjectId),
+              initialValue: selectedSubjectId,
               isExpanded: true,
               decoration: const InputDecoration(
                 labelText: 'Disciplina vinculada',
@@ -106,6 +115,12 @@ class _TimerScreen extends StatelessWidget {
             ),
           if (!subjects.isLoading && subjects.subjects.isEmpty)
             const Text('Cadastre uma disciplina para iniciar o foco.'),
+          if (!subjects.isLoading &&
+              vm.subjectId != null &&
+              selectedSubjectId == null)
+            const Text(
+              'A disciplina planejada não está disponível. Escolha outra para iniciar.',
+            ),
           StudyPanel(
             child: Column(
               children: [
@@ -170,7 +185,7 @@ class _TimerScreen extends StatelessWidget {
                           vm.saving ||
                               vm.needsSave ||
                               (vm.mode == FocusMode.focus &&
-                                  vm.subjectId == null)
+                                  selectedSubjectId == null)
                           ? null
                           : vm.toggle,
                       icon: Icon(

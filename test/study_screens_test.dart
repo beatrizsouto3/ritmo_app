@@ -148,4 +148,52 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('planned subject is selected when Pomodoro opens', (
+    tester,
+  ) async {
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/disciplinas')) {
+        return http.Response('[{"id":3,"nome":"Matemática"}]', 200);
+      }
+      return http.Response('[]', 200);
+    });
+    addTearDown(client.close);
+    final repo = StudyRepository(
+      StudyService(
+        config: config,
+        client: client,
+        accessToken: () async => 'token',
+        userId: () => 'user',
+      ),
+    );
+    final study = StudyViewModel(repo);
+    final subjects = SubjectsViewModel(
+      SubjectRepository(SubjectService(config: config, client: client)),
+    );
+    addTearDown(study.dispose);
+    addTearDown(subjects.dispose);
+    await subjects.loadSubjects();
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider.value(value: repo),
+          ChangeNotifierProvider.value(value: study),
+          ChangeNotifierProvider.value(value: subjects),
+        ],
+        child: MaterialApp(
+          theme: buildRitmoTheme(),
+          home: const PomodoroView(initialSubjectId: 3),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Matemática'), findsOneWidget);
+    final button = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Iniciar / retomar'),
+    );
+    expect(button.onPressed, isNotNull);
+    expect(tester.takeException(), isNull);
+  });
 }

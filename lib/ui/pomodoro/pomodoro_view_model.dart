@@ -10,8 +10,13 @@ import '../../domain/models/study_preferences.dart';
 enum FocusMode { focus, shortBreak, longBreak }
 
 class PomodoroViewModel extends ChangeNotifier {
-  PomodoroViewModel(this._repository, this.preferences, {Stopwatch? stopwatch})
-    : _watch = stopwatch ?? Stopwatch();
+  PomodoroViewModel(
+    this._repository,
+    this.preferences, {
+    Stopwatch? stopwatch,
+    int? initialSubjectId,
+  }) : _watch = stopwatch ?? Stopwatch(),
+       subjectId = initialSubjectId;
   final StudyRepository _repository;
   final StudyPreferences preferences;
   FocusMode mode = FocusMode.focus;
