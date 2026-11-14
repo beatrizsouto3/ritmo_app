@@ -6,6 +6,7 @@ import '../../data/repositories/question_repository.dart';
 import '../../data/repositories/topic_repository.dart';
 import '../../domain/models/planned_session.dart';
 import '../../domain/models/question_record.dart';
+import '../../domain/models/daily_question_accuracy.dart';
 import '../../domain/models/study_topic.dart';
 
 class UrgentTopic {
@@ -35,6 +36,9 @@ class DashboardMetricsViewModel extends ChangeNotifier {
   int get totalCorrect => _records.fold(0, (sum, row) => sum + row.correct);
   double? get accuracy =>
       totalQuestions == 0 ? null : totalCorrect / totalQuestions;
+
+  List<DailyQuestionAccuracy> dailyAccuracy(DateTime now) =>
+      calculateDailyQuestionAccuracy(_records, now);
 
   List<PlannedSession> sessionsToday(DateTime now) => _week.where((row) {
     final day = row.startsAt.toLocal();
