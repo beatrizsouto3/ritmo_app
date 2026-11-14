@@ -9,7 +9,6 @@ Cadastro e login por e-mail, disciplinas e flashcards com revisão espaçada por
 1. Copie [config/supabase.example.json](config/supabase.example.json) para `config/supabase.json` e preencha a URL e a chave pública do projeto.
 2. No SQL Editor, execute [schema.sql](supabase/schema.sql) em um projeto novo e depois a [migração de flashcards](supabase/migrations/202611120001_flashcards.sql). Se disciplinas já estiverem configuradas, execute somente a migração nova.
 3. Habilite autenticação por e-mail e confirmação de cadastro.
-4. Em **Authentication → URL Configuration**, configure **Site URL** como `br.ufrn.ritmo://login-callback`. Assim, o link de confirmação abre o aplicativo Android, onde o usuário entra com e-mail e senha. Instale novamente o app após alterar o `AndroidManifest.xml`.
 
 ## Executar
 
