@@ -23,7 +23,7 @@ class _SubjectsViewState extends State<SubjectsView> {
     super.dispose();
   }
 
-  Future<void> _openForm(BuildContext context) async {
+  Future<void> _openForm(BuildContext context, {Subject? subject}) async {
     final viewModel = context.read<SubjectsViewModel>();
     viewModel.clearSaveError();
     final saved = await showDialog<bool>(
@@ -31,14 +31,62 @@ class _SubjectsViewState extends State<SubjectsView> {
       barrierDismissible: false,
       builder: (_) => ChangeNotifierProvider.value(
         value: viewModel,
-        child: const SubjectForm(),
+        child: SubjectForm(subject: subject),
       ),
     );
     if (saved == true && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Disciplina cadastrada.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            subject == null
+                ? 'Disciplina cadastrada.'
+                : 'Disciplina atualizada.',
+          ),
+        ),
+      );
     }
+  }
+
+  Future<void> _deleteSubject(
+    BuildContext context,
+    SubjectsViewModel viewModel,
+    Subject subject,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir disciplina?'),
+        content: Text(
+          '“${subject.name}”, seus tópicos, sessões planejadas, registros de '
+          'questões e registros de foco serão removidos. Essa ação não pode '
+          'ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton.tonal(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    viewModel.clearSaveError();
+    final deleted = await viewModel.deleteSubject(subject.id);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          deleted
+              ? 'Disciplina excluída.'
+              : viewModel.saveError ?? 'Não foi possível excluir a disciplina.',
+        ),
+      ),
+    );
   }
 
   @override
@@ -258,7 +306,38 @@ class _SubjectsViewState extends State<SubjectsView> {
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
             subtitle: const Text('Tópicos e progresso de estudo'),
-            trailing: const Icon(Icons.chevron_right_rounded),
+            trailing: PopupMenuButton<_SubjectAction>(
+              tooltip: 'Ações da disciplina',
+              enabled: !viewModel.isSaving,
+              onSelected: (action) {
+                switch (action) {
+                  case _SubjectAction.edit:
+                    _openForm(context, subject: subject);
+                    break;
+                  case _SubjectAction.delete:
+                    _deleteSubject(context, viewModel, subject);
+                    break;
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: _SubjectAction.edit,
+                  child: ListTile(
+                    leading: Icon(Icons.edit_outlined),
+                    title: Text('Editar'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+                PopupMenuItem(
+                  value: _SubjectAction.delete,
+                  child: ListTile(
+                    leading: Icon(Icons.delete_outline_rounded),
+                    title: Text('Excluir'),
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ],
+            ),
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute<void>(
                 builder: (_) => TopicsView(
@@ -273,6 +352,8 @@ class _SubjectsViewState extends State<SubjectsView> {
     );
   }
 }
+
+enum _SubjectAction { edit, delete }
 
 class _ProgressSummary extends StatelessWidget {
   const _ProgressSummary({required this.count, required this.isLoading});

@@ -7,6 +7,7 @@ import '../study/preferences_view.dart';
 import '../study/metrics_view.dart';
 import '../study/study_view_model.dart';
 import '../flashcards/flashcards_view.dart';
+import '../questions/question_records_view.dart';
 import '../subjects/subjects_view.dart';
 import '../subjects/subjects_view_model.dart';
 import 'dashboard_metrics_view_model.dart';
@@ -144,6 +145,13 @@ class DashboardView extends StatelessWidget {
                   title: 'Pomodoro',
                   subtitle: 'Foco, pausas e tempo líquido por disciplina',
                   onTap: () => _open(context, const PomodoroView()),
+                ),
+                const SizedBox(height: 10),
+                _FeatureTile(
+                  icon: Icons.quiz_outlined,
+                  title: 'Questões e simulados',
+                  subtitle: 'Registre acertos e acompanhe seu aproveitamento',
+                  onTap: () => _open(context, const QuestionRecordsView()),
                 ),
                 const SizedBox(height: 10),
                 _FeatureTile(
