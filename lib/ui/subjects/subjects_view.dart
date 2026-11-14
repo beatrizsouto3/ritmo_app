@@ -1,11 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../domain/models/subject.dart';
 import 'subject_form.dart';
+import 'topics_view.dart';
 import 'subjects_view_model.dart';
 
-class SubjectsView extends StatelessWidget {
+class SubjectsView extends StatefulWidget {
   const SubjectsView({super.key});
+
+  @override
+  State<SubjectsView> createState() => _SubjectsViewState();
+}
+
+class _SubjectsViewState extends State<SubjectsView> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   Future<void> _openForm(BuildContext context) async {
     final viewModel = context.read<SubjectsViewModel>();
@@ -28,34 +44,101 @@ class SubjectsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<SubjectsViewModel>();
+    final subjects = viewModel.subjects
+        .where((subject) => subject.name.toLowerCase().contains(_query))
+        .toList();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Disciplinas')),
+      backgroundColor: const Color(0xFFF8F9FF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF8F9FF),
+        title: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Ritmo', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              'Disciplinas',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w400),
+            ),
+          ],
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 720),
+            constraints: const BoxConstraints(maxWidth: 760),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    'Organize o que você vai estudar.',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _ProgressSummary(
+                        count: viewModel.subjects.length,
+                        isLoading: viewModel.isLoading,
+                      ),
+                      const SizedBox(height: 18),
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (value) =>
+                            setState(() => _query = value.trim().toLowerCase()),
+                        decoration: InputDecoration(
+                          hintText: 'Buscar disciplinas…',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: _query.isEmpty
+                              ? null
+                              : IconButton(
+                                  tooltip: 'Limpar busca',
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _query = '');
+                                  },
+                                  icon: const Icon(Icons.close_rounded),
+                                ),
+                          filled: true,
+                          fillColor: const Color(0xFFEFF4FF),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(28),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Suas disciplinas',
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                          Text(
+                            '${viewModel.subjects.length}',
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(color: const Color(0xFF33628A)),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                Expanded(child: _buildContent(context, viewModel)),
+                Expanded(child: _buildContent(context, viewModel, subjects)),
                 Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: FilledButton.icon(
-                    onPressed:
-                        viewModel.isLoading || viewModel.loadError != null
-                        ? null
-                        : () => _openForm(context),
-                    icon: const Icon(Icons.add),
-                    label: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 14),
-                      child: Text('Adicionar disciplina'),
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed:
+                          viewModel.isLoading || viewModel.loadError != null
+                          ? null
+                          : () => _openForm(context),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: Text('Adicionar disciplina'),
+                      ),
                     ),
                   ),
                 ),
@@ -67,7 +150,11 @@ class SubjectsView extends StatelessWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, SubjectsViewModel viewModel) {
+  Widget _buildContent(
+    BuildContext context,
+    SubjectsViewModel viewModel,
+    List<Subject> subjects,
+  ) {
     if (viewModel.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -77,7 +164,7 @@ class SubjectsView extends StatelessWidget {
     }
     if (viewModel.loadError != null) {
       return Center(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -86,36 +173,41 @@ class SubjectsView extends StatelessWidget {
               const SizedBox(height: 16),
               Text(viewModel.loadError!, textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              OutlinedButton(
+              OutlinedButton.icon(
                 onPressed: viewModel.loadSubjects,
-                child: const Text('Tentar novamente'),
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('Tentar novamente'),
               ),
             ],
           ),
         ),
       );
     }
-    if (viewModel.subjects.isEmpty) {
+    if (subjects.isEmpty) {
+      final hasSearch = _query.isNotEmpty;
       return Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
-                Icons.menu_book_outlined,
-                size: 56,
-                color: Theme.of(context).colorScheme.primary,
+                hasSearch ? Icons.search_off_rounded : Icons.menu_book_rounded,
+                size: 48,
+                color: const Color(0xFF33628A),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Text(
-                'Nenhuma disciplina cadastrada',
+                hasSearch ? 'Nenhum resultado' : 'Sua lista começa aqui',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleLarge,
+                style: Theme.of(context).textTheme.titleLarge
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Adicione sua primeira disciplina para começar.',
+              const SizedBox(height: 6),
+              Text(
+                hasSearch
+                    ? 'Tente buscar por outro nome.'
+                    : 'Cadastre uma disciplina para organizar seus assuntos.',
                 textAlign: TextAlign.center,
               ),
             ],
@@ -124,36 +216,111 @@ class SubjectsView extends StatelessWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      itemCount: viewModel.subjects.length,
-      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      itemCount: subjects.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final subject = viewModel.subjects[index];
+        final subject = subjects[index];
         return Card(
           key: ValueKey(subject.id),
           color: Colors.white,
-          elevation: 1,
-          shadowColor: const Color(0x18001D39),
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                const Icon(Icons.menu_book_outlined),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    subject.name,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 8,
+            ),
+            leading: const CircleAvatar(
+              backgroundColor: Color(0xFFE6EEFF),
+              foregroundColor: Color(0xFF0A4174),
+              child: Icon(Icons.menu_book_rounded),
+            ),
+            title: Text(
+              subject.name,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            subtitle: const Text('Tópicos e progresso de estudo'),
+            trailing: const Icon(Icons.chevron_right_rounded),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => TopicsView(
+                  subjectId: subject.id,
+                  subjectName: subject.name,
                 ),
-              ],
+              ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _ProgressSummary extends StatelessWidget {
+  const _ProgressSummary({required this.count, required this.isLoading});
+
+  final int count;
+  final bool isLoading;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF002B52), Color(0xFF0A4174)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          const CircleAvatar(
+            radius: 23,
+            backgroundColor: Color(0x33FFFFFF),
+            child: Icon(Icons.auto_stories_rounded, color: Colors.white),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'PLANO DE ESTUDOS',
+                  style: TextStyle(
+                    color: Color(0xFFA4D0FE),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isLoading
+                      ? 'Carregando…'
+                      : count == 1
+                      ? '1 disciplina cadastrada'
+                      : '$count disciplinas cadastradas',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Seu progresso será calculado com os tópicos.',
+                  style: TextStyle(color: Color(0xFFD3E3FF), fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
