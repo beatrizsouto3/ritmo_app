@@ -14,13 +14,9 @@ Cadastro e login por e-mail, disciplinas e flashcards com revisão espaçada por
 
 Requer Flutter com Dart 3.13 ou compatível com o `pubspec.yaml`.
 
-Se a pasta `android/` ainda não existir:
+A pasta `android/` contém os fontes e a configuração nativa usados pelo Gradle para montar o APK. Esses arquivos são versionados para que a dupla compartilhe a mesma configuração, incluindo a permissão de internet necessária para acessar o Supabase. Caches, saídas de compilação, caminhos locais do SDK e chaves de assinatura ficam fora do Git.
 
-```bash
-flutter create --platforms=android --project-name ritmo_app .
-```
-
-Garanta a permissão `android.permission.INTERNET` no manifesto principal do Android.
+Após clonar e configurar `config/supabase.json`, execute:
 
 ```bash
 flutter pub get
