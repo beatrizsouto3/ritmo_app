@@ -2,12 +2,14 @@ import '../../domain/models/study_preferences.dart';
 import '../services/study_service.dart';
 
 class StudyRepository {
-  StudyRepository(this._service);
+  StudyRepository(this._service, {StudyPreferences? initialPreferences})
+    : _initialPreferences = initialPreferences ?? const StudyPreferences();
   final StudyService _service;
+  final StudyPreferences _initialPreferences;
   Future<StudyPreferences> loadPreferences() async {
     final rows = await _service.preferences();
     return rows.isEmpty
-        ? const StudyPreferences()
+        ? _initialPreferences
         : StudyPreferences.fromJson(rows.single);
   }
 

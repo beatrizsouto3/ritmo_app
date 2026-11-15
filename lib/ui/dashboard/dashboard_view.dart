@@ -427,18 +427,24 @@ class _FocusCard extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '${(progress * 100).round()}% concluído hoje',
-              style: const TextStyle(color: Color(0xFFCEE5FF), fontSize: 11),
+            Expanded(
+              child: Text(
+                '${(progress * 100).round()}% concluído hoje',
+                style: const TextStyle(color: Color(0xFFCEE5FF), fontSize: 11),
+              ),
             ),
-            Text(
-              progress >= 1
-                  ? 'Meta concluída'
-                  : 'Resta ${_formatDuration((goalSeconds - studiedSeconds).clamp(0, goalSeconds))}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                progress >= 1
+                    ? 'Meta concluída'
+                    : 'Resta ${_formatDuration((goalSeconds - studiedSeconds).clamp(0, goalSeconds))}',
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ],

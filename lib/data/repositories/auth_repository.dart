@@ -21,6 +21,8 @@ class AuthRepository extends ChangeNotifier {
   int _revision = 0;
 
   String? get userId => _session?.userId;
+  String? get fullName => _session?.fullName;
+  String? get studyGoal => _session?.studyGoal;
 
   Future<void> restoreSession() async {
     if (_store == null || isRestoring || _isDisposed) return;
@@ -59,9 +61,19 @@ class AuthRepository extends ChangeNotifier {
     await _activate(await _service.signIn(email, password), revision);
   }
 
-  Future<bool> signUp(String email, String password) async {
+  Future<bool> signUp(
+    String email,
+    String password, {
+    String? fullName,
+    String? goal,
+  }) async {
     final revision = _revision;
-    final session = await _service.signUp(email, password);
+    final session = await _service.signUp(
+      email,
+      password,
+      fullName: fullName,
+      goal: goal,
+    );
     if (session != null) await _activate(session, revision);
     return session != null;
   }
