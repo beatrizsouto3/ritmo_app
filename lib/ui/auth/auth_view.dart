@@ -11,28 +11,54 @@ class AuthView extends StatefulWidget {
 }
 
 class _AuthViewState extends State<AuthView> {
+  static const _goals = [
+    'Residência Médica',
+    'Concursos Públicos',
+    'ENEM / Vestibulares',
+    'OAB & Jurídico',
+  ];
   final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isRegistering = false;
   bool _showPassword = false;
   bool _hasSubmitted = false;
+  String? _selectedGoal;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_refreshPasswordStrength);
+  }
+
+  void _refreshPasswordStrength() {
+    if (mounted && _isRegistering) setState(() {});
+  }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     setState(() => _hasSubmitted = true);
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() ||
+        (_isRegistering && _selectedGoal == null)) {
+      return;
+    }
     final viewModel = context.read<AuthViewModel>();
     final success = _isRegistering
         ? await viewModel.signUp(
             _emailController.text,
             _passwordController.text,
+            fullName: _nameController.text,
+            goal: _selectedGoal,
           )
         : await viewModel.signIn(
             _emailController.text,
@@ -40,6 +66,7 @@ class _AuthViewState extends State<AuthView> {
           );
     if (success && mounted) {
       _passwordController.clear();
+      _confirmPasswordController.clear();
       setState(() {
         _isRegistering = false;
         _hasSubmitted = false;
@@ -51,12 +78,15 @@ class _AuthViewState extends State<AuthView> {
     if (_isRegistering == registering || viewModel.isBusy) return;
     viewModel.clearFeedback();
     _formKey.currentState?.reset();
+    _nameController.clear();
     _emailController.clear();
     _passwordController.clear();
+    _confirmPasswordController.clear();
     setState(() {
       _isRegistering = registering;
       _hasSubmitted = false;
       _showPassword = false;
+      _selectedGoal = null;
     });
   }
 
@@ -145,15 +175,66 @@ class _AuthViewState extends State<AuthView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              _isRegistering
-                                  ? 'Crie sua conta para começar'
-                                  : 'Que bom ter você de volta',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 16),
-                            _FieldLabel(label: 'E-mail'),
+                            if (_isRegistering) ...[
+                              const _FieldLabel(
+                                label: 'Qual é a sua meta principal?',
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final goal in _goals)
+                                    ChoiceChip(
+                                      label: Text(goal),
+                                      selected: _selectedGoal == goal,
+                                      onSelected: viewModel.isBusy
+                                          ? null
+                                          : (_) => setState(
+                                              () => _selectedGoal = goal,
+                                            ),
+                                      showCheckmark: false,
+                                      backgroundColor: const Color(0xFFE6EEFF),
+                                      selectedColor: const Color(0xFFCEE5FF),
+                                      side: BorderSide.none,
+                                      labelStyle: const TextStyle(
+                                        color: Color(0xFF164A70),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (_hasSubmitted && _selectedGoal == null) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Selecione sua meta principal.',
+                                  style: TextStyle(
+                                    color: colors.error,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 16),
+                              const _FieldLabel(label: 'Nome completo'),
+                              const SizedBox(height: 6),
+                              TextFormField(
+                                controller: _nameController,
+                                enabled: !viewModel.isBusy,
+                                textCapitalization: TextCapitalization.words,
+                                textInputAction: TextInputAction.next,
+                                autofillHints: const [AutofillHints.name],
+                                decoration: _decoration(
+                                  hint: 'Ex: Dra. Helena Silveira',
+                                  icon: Icons.person_outline_rounded,
+                                ),
+                                validator: (value) =>
+                                    (value?.trim().isEmpty ?? true)
+                                    ? 'Informe seu nome completo.'
+                                    : null,
+                              ),
+                              const SizedBox(height: 14),
+                            ],
+                            const _FieldLabel(label: 'E-mail de estudos'),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _emailController,
@@ -163,8 +244,8 @@ class _AuthViewState extends State<AuthView> {
                               autocorrect: false,
                               autofillHints: const [AutofillHints.email],
                               decoration: _decoration(
-                                hint: 'seuemail@exemplo.com',
-                                icon: Icons.mail_outline_rounded,
+                                hint: 'seu.nome@exemplo.com',
+                                icon: Icons.alternate_email_rounded,
                               ),
                               validator: (value) {
                                 final email = value?.trim() ?? '';
@@ -176,7 +257,9 @@ class _AuthViewState extends State<AuthView> {
                               },
                             ),
                             const SizedBox(height: 14),
-                            _FieldLabel(label: 'Senha'),
+                            _FieldLabel(
+                              label: _isRegistering ? 'Criar Senha' : 'Senha',
+                            ),
                             const SizedBox(height: 6),
                             TextFormField(
                               controller: _passwordController,
@@ -189,11 +272,17 @@ class _AuthViewState extends State<AuthView> {
                                     ? AutofillHints.newPassword
                                     : AutofillHints.password,
                               ],
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
+                              textInputAction: _isRegistering
+                                  ? TextInputAction.next
+                                  : TextInputAction.done,
+                              onFieldSubmitted: _isRegistering
+                                  ? null
+                                  : (_) => _submit(),
                               decoration:
                                   _decoration(
-                                    hint: 'Digite sua senha',
+                                    hint: _isRegistering
+                                        ? 'Mínimo 8 caracteres'
+                                        : 'Digite sua senha',
                                     icon: Icons.lock_outline_rounded,
                                   ).copyWith(
                                     suffixIcon: IconButton(
@@ -217,12 +306,38 @@ class _AuthViewState extends State<AuthView> {
                                 if (value == null || value.isEmpty) {
                                   return 'Informe sua senha.';
                                 }
-                                if (_isRegistering && value.length < 6) {
-                                  return 'Use pelo menos 6 caracteres.';
+                                if (_isRegistering && value.length < 8) {
+                                  return 'Use pelo menos 8 caracteres.';
                                 }
                                 return null;
                               },
                             ),
+                            if (_isRegistering) ...[
+                              const SizedBox(height: 8),
+                              _PasswordStrength(
+                                password: _passwordController.text,
+                              ),
+                              const SizedBox(height: 14),
+                              const _FieldLabel(label: 'Confirmar Senha'),
+                              const SizedBox(height: 6),
+                              TextFormField(
+                                controller: _confirmPasswordController,
+                                enabled: !viewModel.isBusy,
+                                obscureText: !_showPassword,
+                                autocorrect: false,
+                                enableSuggestions: false,
+                                textInputAction: TextInputAction.done,
+                                onFieldSubmitted: (_) => _submit(),
+                                decoration: _decoration(
+                                  hint: 'Repita a senha criada',
+                                  icon: Icons.lock_clock_outlined,
+                                ),
+                                validator: (value) =>
+                                    value != _passwordController.text
+                                    ? 'As senhas não coincidem.'
+                                    : null,
+                              ),
+                            ],
                             if (viewModel.error != null ||
                                 viewModel.message != null) ...[
                               const SizedBox(height: 14),
@@ -245,7 +360,7 @@ class _AuthViewState extends State<AuthView> {
                                       )
                                     : Text(
                                         _isRegistering
-                                            ? 'Criar conta'
+                                            ? 'Criar Conta & Calibrar Estudos'
                                             : 'Entrar',
                                       ),
                               ),
@@ -255,7 +370,9 @@ class _AuthViewState extends State<AuthView> {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'Ao continuar, seus dados de estudo ficam associados à sua conta.',
+                        _isRegistering
+                            ? 'Próximo passo: definir grade de matérias e ritmo diário'
+                            : 'Ao continuar, seus dados de estudo ficam associados à sua conta.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall
                             ?.copyWith(color: const Color(0xFF737780)),
@@ -279,23 +396,23 @@ class _AuthViewState extends State<AuthView> {
       fillColor: const Color(0xFFEFF4FF),
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(28),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(28),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(28),
         borderSide: const BorderSide(color: Color(0xFF0A4174), width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(28),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(28),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
       ),
     );
@@ -382,6 +499,59 @@ class _FieldLabel extends StatelessWidget {
     style: Theme.of(context).textTheme.labelLarge
         ?.copyWith(color: const Color(0xFF42474F), fontWeight: FontWeight.w600),
   );
+}
+
+class _PasswordStrength extends StatelessWidget {
+  const _PasswordStrength({required this.password});
+
+  final String password;
+
+  @override
+  Widget build(BuildContext context) {
+    final score =
+        (password.length >= 8 ? 1 : 0) +
+        (RegExp(r'[A-Z]').hasMatch(password) &&
+                RegExp(r'[a-z]').hasMatch(password)
+            ? 1
+            : 0) +
+        (RegExp(r'[0-9!@#\$%^&*(),.?":{}|<>]').hasMatch(password) ? 1 : 0);
+    final label = password.isEmpty
+        ? 'Use 8 caracteres ou mais'
+        : score == 3
+        ? 'Senha forte'
+        : score == 2
+        ? 'Boa para segurança acadêmica'
+        : 'Adicione letras, números e símbolos';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Row(
+          children: [
+            for (var index = 0; index < 3; index++) ...[
+              if (index > 0) const SizedBox(width: 6),
+              Expanded(
+                child: Container(
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: index < score
+                        ? const Color(0xFF0A4174)
+                        : const Color(0xFFE6EEFF),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall
+              ?.copyWith(color: const Color(0xFF33628A)),
+        ),
+      ],
+    );
+  }
 }
 
 class _AuthFeedback extends StatelessWidget {

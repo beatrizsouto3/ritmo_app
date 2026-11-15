@@ -63,6 +63,35 @@ void main() {
     expect(await restored.getAccessToken(), 'access-a');
   });
 
+  test('signup profile metadata survives login and session restore', () async {
+    final store = _MemorySessionStore();
+    final client = MockClient(
+      (_) async => _response({
+        ..._session(),
+        'user': {
+          'id': 'user-a',
+          'user_metadata': {
+            'full_name': 'Davi Silva',
+            'study_goal': 'Concursos Públicos',
+          },
+        },
+      }),
+    );
+    addTearDown(client.close);
+    final service = AuthService(config: _config, client: client);
+    final first = AuthRepository(service, sessionStore: store);
+    await first.signIn('davi@example.com', 'test-password');
+    expect(first.fullName, 'Davi Silva');
+    expect(first.studyGoal, 'Concursos Públicos');
+    first.dispose();
+
+    final restored = AuthRepository(service, sessionStore: store);
+    addTearDown(restored.dispose);
+    await restored.restoreSession();
+    expect(restored.fullName, 'Davi Silva');
+    expect(restored.studyGoal, 'Concursos Públicos');
+  });
+
   test('an expired saved session refreshes before use', () async {
     final store = _MemorySessionStore();
     var refreshCalls = 0;
@@ -285,8 +314,16 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       var calls = 0;
-      final client = MockClient((_) async {
+      final client = MockClient((request) async {
         calls++;
+        expect(jsonDecode(request.body), {
+          'email': 'davi@example.com',
+          'password': 'test-password',
+          'data': {
+            'full_name': 'Davi Silva',
+            'study_goal': 'Concursos Públicos',
+          },
+        });
         return _response({'id': 'new-user'});
       });
       addTearDown(client.close);
@@ -304,25 +341,32 @@ void main() {
       );
       await tester.tap(find.widgetWithText(TextButton, 'Criar conta'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(
-        find.widgetWithText(FilledButton, 'Criar conta'),
+      final submit = find.widgetWithText(
+        FilledButton,
+        'Criar Conta & Calibrar Estudos',
       );
-      await tester.tap(find.widgetWithText(FilledButton, 'Criar conta'));
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
       await tester.pumpAndSettle();
       expect(find.text('Informe um e-mail válido.'), findsOneWidget);
       expect(calls, 0);
+      await tester.ensureVisible(find.text('Concursos Públicos'));
+      await tester.tap(find.text('Concursos Públicos'));
+      await tester.enterText(find.byType(TextFormField).at(0), 'Davi Silva');
       await tester.enterText(
-        find.byType(TextFormField).at(0),
+        find.byType(TextFormField).at(1),
         'davi@example.com',
       );
-      await tester.enterText(find.byType(TextFormField).at(1), 'test-password');
-      await tester.ensureVisible(
-        find.widgetWithText(FilledButton, 'Criar conta'),
-      );
-      await tester.ensureVisible(
-        find.widgetWithText(FilledButton, 'Criar conta'),
-      );
-      await tester.tap(find.widgetWithText(FilledButton, 'Criar conta'));
+      await tester.enterText(find.byType(TextFormField).at(2), 'test-password');
+      await tester.enterText(find.byType(TextFormField).at(3), 'different');
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
+      await tester.pumpAndSettle();
+      expect(find.text('As senhas não coincidem.'), findsOneWidget);
+      expect(calls, 0);
+      await tester.enterText(find.byType(TextFormField).at(3), 'test-password');
+      await tester.ensureVisible(submit);
+      await tester.tap(submit);
       await tester.pumpAndSettle();
       expect(find.textContaining('Confira seu e-mail'), findsOneWidget);
       expect(viewModel.isAuthenticated, isFalse);
@@ -341,7 +385,16 @@ void main() {
     Map<String, Object?>? preferences;
     final client = MockClient((request) async {
       if (request.url.path.endsWith('/token')) {
-        return _response(_session());
+        return _response({
+          ..._session(),
+          'user': {
+            'id': 'user-a',
+            'user_metadata': {
+              'full_name': 'Beatriz Silva',
+              'study_goal': 'Concursos Públicos',
+            },
+          },
+        });
       }
       if (request.url.path.endsWith('/preferencias_estudo')) {
         if (request.method == 'POST') {
@@ -375,6 +428,7 @@ void main() {
     await auth.signIn('bia@example.com', 'test-password');
     await tester.pumpAndSettle();
     expect(find.text('Monte seu Ritmo'), findsOneWidget);
+    expect(find.text('Beatriz Silva'), findsOneWidget);
     expect(find.text('Continue por aqui'), findsNothing);
     for (var step = 0; step < 2; step++) {
       final continueButton = find.widgetWithText(FilledButton, 'Continuar');
@@ -391,6 +445,8 @@ void main() {
     await tester.tap(finish);
     await tester.pumpAndSettle();
     expect(preferences?['configurado'], isTrue);
+    expect(preferences?['nome'], 'Beatriz Silva');
+    expect(preferences?['objetivo'], 'Concursos Públicos');
     expect(find.byType(DashboardView), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
