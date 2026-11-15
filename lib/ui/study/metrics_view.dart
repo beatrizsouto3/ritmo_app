@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../common/study_layout.dart';
+import '../common/main_navigation_bar.dart';
 import '../subjects/subjects_view_model.dart';
 import 'study_view_model.dart';
 import '../dashboard/dashboard_metrics_view_model.dart';
 
 class MetricsView extends StatelessWidget {
-  const MetricsView({super.key});
+  const MetricsView({super.key, this.showNavigation = false});
+
+  final bool showNavigation;
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<StudyViewModel>();
@@ -18,6 +21,14 @@ class MetricsView extends StatelessWidget {
     final maximum = totals.values.fold<int>(1, (max, n) => n > max ? n : max);
     return StudyLayout(
       title: 'Métricas de estudo',
+      bottomNavigationBar: showNavigation
+          ? MainNavigationBar(
+              selectedIndex: 4,
+              onSelected: (index) {
+                if (index != 4) openMainDestination(context, index);
+              },
+            )
+          : null,
       children: [
         if (vm.busy) const LinearProgressIndicator(),
         if (vm.error != null) ...[

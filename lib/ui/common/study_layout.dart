@@ -6,13 +6,16 @@ class StudyLayout extends StatelessWidget {
     required this.title,
     required this.children,
     this.actions,
+    this.bottomNavigationBar,
   });
   final String title;
   final List<Widget> children;
   final List<Widget>? actions;
+  final Widget? bottomNavigationBar;
   @override
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(title: Text(title), actions: actions),
+    bottomNavigationBar: bottomNavigationBar,
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(

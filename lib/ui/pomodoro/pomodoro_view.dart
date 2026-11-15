@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+
 import '../../data/repositories/study_repository.dart';
+import '../common/main_navigation_bar.dart';
 import '../common/study_layout.dart';
 import '../study/study_view_model.dart';
 import '../subjects/subjects_view_model.dart';
+import 'focus_progress_ring.dart';
 import 'pomodoro_view_model.dart';
 
 class PomodoroView extends StatelessWidget {
-  const PomodoroView({super.key, this.initialSubjectId});
+  const PomodoroView({
+    super.key,
+    this.initialSubjectId,
+    this.showNavigation = false,
+  });
 
   final int? initialSubjectId;
+  final bool showNavigation;
 
   @override
   Widget build(BuildContext context) => ChangeNotifierProvider(
@@ -20,12 +28,14 @@ class PomodoroView extends StatelessWidget {
       initialSubjectId: initialSubjectId,
       onSessionSaved: context.read<StudyViewModel>().recordCompletedSession,
     ),
-    child: const _TimerScreen(),
+    child: _TimerScreen(showNavigation: showNavigation),
   );
 }
 
 class _TimerScreen extends StatelessWidget {
-  const _TimerScreen();
+  const _TimerScreen({required this.showNavigation});
+
+  final bool showNavigation;
   Future<bool> _confirm(BuildContext context, String text) async =>
       await showDialog<bool>(
         context: context,
@@ -70,6 +80,27 @@ class _TimerScreen extends StatelessWidget {
       },
       child: StudyLayout(
         title: 'Pomodoro · Foco',
+        bottomNavigationBar: showNavigation
+            ? MainNavigationBar(
+                selectedIndex: 1,
+                onSelected: (index) async {
+                  if (index == 1 || vm.saving) return;
+                  if (vm.hasStarted) {
+                    final close = await _confirm(
+                      context,
+                      vm.needsSave
+                          ? 'O ciclo concluído ainda não foi salvo. Sair descarta a tentativa pendente.'
+                          : 'Ao sair, o ciclo em andamento será descartado. Pausas e ciclos cancelados não contam como estudo.',
+                    );
+                    if (!close || !context.mounted) return;
+                    vm.cancel();
+                    await WidgetsBinding.instance.endOfFrame;
+                    if (!context.mounted) return;
+                  }
+                  openMainDestination(context, index);
+                },
+              )
+            : null,
         children: [
           Wrap(
             spacing: 8,
@@ -131,21 +162,29 @@ class _TimerScreen extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      SizedBox.square(
-                        dimension: 228,
-                        child: CircularProgressIndicator(
-                          value: 1 - vm.progress,
-                          strokeWidth: 10,
-                          backgroundColor: const Color(0xFFE6EEFF),
-                          color: const Color(0xFF0A4174),
-                        ),
-                      ),
+                      FocusProgressRing(remainingFraction: 1 - vm.progress),
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            vm.label.toUpperCase(),
-                            style: Theme.of(context).textTheme.labelLarge,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFE6EEFF),
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(99),
+                              ),
+                            ),
+                            child: Text(
+                              vm.label.toUpperCase(),
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF0A4174),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
                           ),
                           Text(
                             vm.clock,
@@ -153,6 +192,7 @@ class _TimerScreen extends StatelessWidget {
                               fontSize: 52,
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF002B52),
+                              fontFeatures: [FontFeature.tabularFigures()],
                             ),
                           ),
                           Text('${vm.completedCycles} ciclo(s) concluído(s)'),

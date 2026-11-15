@@ -15,7 +15,7 @@ com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service
 | Diagnóstico final / boas-vindas | Primeiro acesso autenticado → passo 3 | Resumo das escolhas reais; abre o Dashboard após salvar |
 | Transição / conclusão onboarding | Mesmo passo 3 | Variante do resumo, sem uma quarta etapa duplicada |
 | Editar perfil | Ícone de pessoa no Início | Novo: nome, foco, meta, durações e rotina |
-| Logo / imagem geral | Referência visual | Não representam rotas adicionais; ícone Material usado como marca provisória |
+| Logo / imagem geral | Marca no login e no cabeçalho | Logo do Stitch reproduzido como desenho vetorial no Flutter; não representa rota adicional |
 
 ## Como preparar o banco
 
@@ -40,11 +40,10 @@ confirmar o cadastro. As escolhas são salvas ao concluir o terceiro passo.
 
 ## Adaptações e pendências
 
-As cores, cartões, hierarquia, seletor de modos e contador circular seguem o
-Stitch. O Dashboard usa sessões concluídas no dia para calcular a barra da meta;
+As cores, cartões, hierarquia, seletor de modos, anel do contador e navegação
+inferior das abas principais seguem o Stitch. O Dashboard usa sessões concluídas no dia para calcular a barra da meta;
 questões e precisão vêm dos registros reais. Ainda não há equivalência visual
-exata: Plus Jakarta Sans e a marca
-final não estão empacotadas. Não são apresentados números fixos, nome de usuário
+exata: Plus Jakarta Sans não está empacotada. Não são apresentados números fixos, nome de usuário
 pré-definido, aprovação estimada, streak, algoritmo SM-2 não implementado ou
 controles sem função de som/bloqueio de notificações.
 

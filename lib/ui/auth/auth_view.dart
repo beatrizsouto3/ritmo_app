@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../common/ritmo_logo.dart';
 import 'auth_view_model.dart';
 
 class AuthView extends StatefulWidget {
@@ -63,8 +64,6 @@ class _AuthViewState extends State<AuthView> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<AuthViewModel>();
-    final colors = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),
       body: SafeArea(
@@ -98,11 +97,7 @@ class _AuthViewState extends State<AuthView> {
                               ),
                             ],
                           ),
-                          child: Icon(
-                            Icons.menu_book_rounded,
-                            size: 42,
-                            color: colors.primary,
-                          ),
+                          child: const Center(child: RitmoLogo(size: 58)),
                         ),
                       ),
                       const SizedBox(height: 14),
