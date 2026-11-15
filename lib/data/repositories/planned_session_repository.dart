@@ -26,6 +26,23 @@ class PlannedSessionRepository {
     return rows.map(PlannedSession.fromJson).toList();
   }
 
+  Future<bool> hasConflict(PlannedSession session) async {
+    _validate(session);
+    if (session.status == PlannedSessionStatus.cancelled) return false;
+    final filters = [
+      'inicio_em.lt.${session.endsAt.toUtc().toIso8601String()}',
+      'fim_em.gt.${session.startsAt.toUtc().toIso8601String()}',
+      'estado.neq.cancelled',
+      if (session.id > 0) 'id.neq.${session.id}',
+    ].join(',');
+    final rows = await _service.request(
+      'GET',
+      _table,
+      query: {'select': 'id', 'limit': '1', 'and': '($filters)'},
+    );
+    return rows.isNotEmpty;
+  }
+
   Future<PlannedSession> create(PlannedSession session) async {
     _validate(session);
     final rows = await _service.request('POST', _table, body: session.toJson());
@@ -51,7 +68,9 @@ class PlannedSessionRepository {
       _table,
       query: {'id': 'eq.$id', 'select': 'id'},
     );
-    _single(rows);
+    if (rows.length != 1 || rows.single['id'] != id) {
+      throw const FormatException('Sessão planejada não encontrada.');
+    }
   }
 
   void _validate(PlannedSession session) {

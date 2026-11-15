@@ -1,6 +1,6 @@
 # Integração dos protótipos Stitch
 
-Referências em `style/stitch_ritmo_study_platform/`. As telas são widgets Flutter,
+Referências em `style/`. As telas são widgets Flutter,
 com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service.
 
 | Referência | Acesso no aplicativo | Situação |
@@ -10,9 +10,9 @@ com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service
 | Grade de disciplinas / edital | Disciplinas → disciplina → tópicos | Integrado; cadastro, edição e exclusão de disciplinas e tópicos, com etapas dos tópicos |
 | Timer Pomodoro | Início → Foco ou cartão Pomodoro | Novo: seleção da disciplina, círculo, foco/pausas, início, pausa, cancelamento e retry ao salvar |
 | Revisão SRS | Flashcards → baralho → revisar | Fluxo existente atualizado com contexto do baralho, progresso e contadores reais |
-| Calibragem de matérias | Início → Encontre seu ritmo → passo 1 | Novo: objetivo, meta diária, durações e acesso ao cadastro real de disciplinas |
-| Horários / notificações | Configuração → passo 2 | Novo: dias e turno persistidos; notificações ainda não implementadas |
-| Diagnóstico final / boas-vindas | Configuração → passo 3 | Novo: resumo das escolhas reais |
+| Calibragem de matérias | Primeiro acesso autenticado → passo 1 | Objetivo, meta diária, durações e acesso ao cadastro real de disciplinas |
+| Horários / notificações | Primeiro acesso autenticado → passo 2 | Dias e turno persistidos; notificações ainda não implementadas |
+| Diagnóstico final / boas-vindas | Primeiro acesso autenticado → passo 3 | Resumo das escolhas reais; abre o Dashboard após salvar |
 | Transição / conclusão onboarding | Mesmo passo 3 | Variante do resumo, sem uma quarta etapa duplicada |
 | Editar perfil | Ícone de pessoa no Início | Novo: nome, foco, meta, durações e rotina |
 | Logo / imagem geral | Referência visual | Não representam rotas adicionais; ícone Material usado como marca provisória |
@@ -32,6 +32,11 @@ banco. Sem a migração seguinte, cronograma, questões e edição/exclusão de
 disciplinas não funcionam. A migração `202611150001_topic_reviews.sql`
 acrescenta a data da última revisão dos tópicos. A autenticação segue
 obrigatória, sem modo de prévia.
+
+O app consulta `preferencias_estudo.configurado` após autenticar. Se ainda for
+`false` ou não houver registro, abre o onboarding antes do Dashboard. Com a
+confirmação de e-mail ativa no Supabase, isso acontece no primeiro login após
+confirmar o cadastro. As escolhas são salvas ao concluir o terceiro passo.
 
 ## Adaptações e pendências
 

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 
 class StudyLayout extends StatelessWidget {
-  const StudyLayout({super.key, required this.title, required this.children});
+  const StudyLayout({
+    super.key,
+    required this.title,
+    required this.children,
+    this.actions,
+  });
   final String title;
   final List<Widget> children;
+  final List<Widget>? actions;
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(title)),
+    appBar: AppBar(title: Text(title), actions: actions),
     body: SafeArea(
       child: Center(
         child: ConstrainedBox(

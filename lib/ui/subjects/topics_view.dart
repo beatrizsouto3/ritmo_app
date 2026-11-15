@@ -135,30 +135,37 @@ class TopicsView extends StatelessWidget {
       );
     }
     if (viewModel.topics.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.checklist_rounded,
-                size: 52,
-                color: Color(0xFF33628A),
+      return LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(28),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.checklist_rounded,
+                      size: 52,
+                      color: Color(0xFF33628A),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Nenhum tópico cadastrado',
+                      style: Theme.of(context).textTheme.titleLarge
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Adicione assuntos e acompanhe teoria, resumo e exercícios.',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Nenhum tópico cadastrado',
-                style: Theme.of(context).textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.w700),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Adicione assuntos e acompanhe teoria, resumo e exercícios.',
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         ),
       );
@@ -217,15 +224,18 @@ class _ProgressCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'PROGRESSO DOS TÓPICOS',
-                style: TextStyle(
-                  color: Color(0xFFA4D0FE),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1,
+              const Expanded(
+                child: Text(
+                  'PROGRESSO DOS TÓPICOS',
+                  style: TextStyle(
+                    color: Color(0xFFA4D0FE),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '${(viewModel.progress * 100).round()}%',
                 style: const TextStyle(
@@ -323,15 +333,24 @@ class _TopicCard extends StatelessWidget {
               onChanged: (value) =>
                   onChanged(topic.copyWith(exercisesSolved: value)),
             ),
-            ListTile(
-              title: Text(
-                topic.lastReviewedAt == null
-                    ? 'Ainda não revisado'
-                    : 'Última revisão: ${MaterialLocalizations.of(context).formatMediumDate(topic.lastReviewedAt!.toLocal())}',
-              ),
-              trailing: TextButton(
-                onPressed: isSaving ? null : onReview,
-                child: const Text('Marcar revisão'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    topic.lastReviewedAt == null
+                        ? 'Ainda não revisado'
+                        : 'Última revisão: ${MaterialLocalizations.of(context).formatMediumDate(topic.lastReviewedAt!.toLocal())}',
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: isSaving ? null : onReview,
+                      child: const Text('Marcar revisão'),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
