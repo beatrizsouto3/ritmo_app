@@ -110,6 +110,24 @@ class TopicService {
     }
   }
 
+  Future<Map<String, Object?>> markReviewed(int topicId) async {
+    final response = await client
+        .patch(
+          config.tableUri(TopicContract.table, {
+            'select': '*',
+            TopicContract.idColumn: 'eq.$topicId',
+          }),
+          headers: {...await _headers, 'Prefer': 'return=representation'},
+          body: jsonEncode({
+            TopicContract.lastReviewedAtColumn: DateTime.now()
+                .toUtc()
+                .toIso8601String(),
+          }),
+        )
+        .timeout(const Duration(seconds: 15));
+    return _decodeSingle(response, 'registrar revisão do tópico');
+  }
+
   Map<String, Object?> _decodeSingle(http.Response response, String action) {
     final rows = _decodeRows(response);
     if (rows.length != 1) {

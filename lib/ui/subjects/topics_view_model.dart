@@ -122,6 +122,28 @@ class TopicsViewModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> markReviewed(int topicId) async {
+    if (_isSaving || _isLoading) return false;
+    _isSaving = true;
+    _saveError = null;
+    notifyListeners();
+    try {
+      final updated = await _repository.markReviewed(topicId);
+      if (_disposed) return false;
+      _topics = [
+        for (final topic in _topics)
+          if (topic.id == updated.id) updated else topic,
+      ];
+      return true;
+    } catch (_) {
+      _saveError = 'Não foi possível registrar a revisão. Tente novamente.';
+      return false;
+    } finally {
+      _isSaving = false;
+      if (!_disposed) notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _disposed = true;

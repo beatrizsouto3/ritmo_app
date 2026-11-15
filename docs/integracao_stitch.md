@@ -29,7 +29,9 @@ As alterações não executam SQL automaticamente no projeto remoto.
 Sem a migração de preferências, perfil e configuração mostram erro com nova
 tentativa; uma conclusão do timer só entra nas métricas quando for salva no
 banco. Sem a migração seguinte, cronograma, questões e edição/exclusão de
-disciplinas não funcionam. A autenticação segue obrigatória, sem modo de prévia.
+disciplinas não funcionam. A migração `202611150001_topic_reviews.sql`
+acrescenta a data da última revisão dos tópicos. A autenticação segue
+obrigatória, sem modo de prévia.
 
 ## Adaptações e pendências
 
@@ -42,9 +44,9 @@ controles sem função de som/bloqueio de notificações.
 Perfil altera preferências de estudo; trocar senha/e-mail e enviar foto exigem
 fluxos próprios que não estão incluídos. O cronograma agenda sessões individuais;
 a tela de horários salva disponibilidade semanal. Não há notificações locais.
-Questões e simulados têm cadastro e histórico. O Dashboard sugere tópicos com
-acerto abaixo de 70% ou mais de sete dias sem questões, usando a última questão
-como referência temporal, e não uma data de revisão do tópico. As métricas
+Questões e simulados têm cadastro e histórico. O Dashboard sugere tópicos sem
+questões, com acerto abaixo de 70%, nunca revisados ou com última revisão há
+mais de sete dias. A revisão é registrada na tela do tópico. As métricas
 mostram ciclos e horas de foco e a evolução dos acertos registrados.
 
 Um ciclo incompleto não sobrevive à morte do processo do app; sair da tela pede

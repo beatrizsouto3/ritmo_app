@@ -10,4 +10,5 @@ abstract final class TopicContract {
   static const exercisesSolvedColumn = 'exercicios_resolvidos';
   static const createdAtColumn = 'criado_em';
   static const updatedAtColumn = 'atualizado_em';
+  static const lastReviewedAtColumn = 'ultima_revisao_em';
 }
