@@ -2,12 +2,21 @@
 
 Aplicativo Flutter de gestão de estudos, desenvolvido em dupla para a disciplina de Desenvolvimento para Dispositivos Móveis da UFRN.
 
-Cadastro e login por e-mail, disciplinas e flashcards com revisão espaçada por usuário. Arquitetura MVVM com Provider e Supabase.
+Cadastro e login por e-mail, disciplinas e tópicos, cronograma semanal, questões,
+Pomodoro e flashcards com revisão espaçada por usuário. Arquitetura MVVM com
+Provider e Supabase.
 
 ## Configuração
 
 1. Copie [config/supabase.example.json](config/supabase.example.json) para `config/supabase.json` e preencha a URL e a chave pública do projeto.
-2. No SQL Editor, execute [schema.sql](supabase/schema.sql) em um projeto novo e depois, nesta ordem, as migrações de [flashcards](supabase/migrations/202611120001_flashcards.sql) e [tópicos](supabase/migrations/202611140001_topics.sql), seguidas de [preferências e sessões](supabase/migrations/202611140002_study_preferences_sessions.sql). Se disciplinas já estiverem configuradas, execute apenas as migrações que ainda não foram aplicadas.
+2. No SQL Editor de um projeto novo, execute [schema.sql](supabase/schema.sql)
+   e depois as migrações, nesta ordem:
+   [flashcards](supabase/migrations/202611120001_flashcards.sql),
+   [tópicos](supabase/migrations/202611140001_topics.sql),
+   [preferências e ciclos de foco](supabase/migrations/202611140002_study_preferences_sessions.sql)
+   e [cronograma, questões e edição de disciplinas](supabase/migrations/202611140003_schedule_questions_subjects.sql).
+   Em um banco já configurado, execute somente as migrações ainda não aplicadas,
+   preservando essa ordem. Não execute novamente o esquema inicial nesse banco.
 3. Habilite autenticação por e-mail e confirmação de cadastro.
 
 ## Executar
@@ -42,9 +51,9 @@ O código HTTP indica a categoria da resposta, enquanto o código do Supabase id
 
 Após a autenticação, o Dashboard oferece configuração inicial em três passos
 (meta e matérias → dias e turno → resumo), edição de perfil de estudos,
-Pomodoro, disciplinas/tópicos, flashcards e métricas de tempo.
-Aplique também [a migração de preferências e sessões](supabase/migrations/202611140002_study_preferences_sessions.sql)
-após as migrações anteriores para persistir perfil, rotina e ciclos de foco.
+Pomodoro, disciplinas/tópicos, cronograma semanal, questões, flashcards e
+métricas de tempo e acerto. As migrações de preferências e ciclos de foco e de
+cronograma e questões são necessárias para persistir esses dados.
 
 O Pomodoro admite foco e pausas configuráveis. Pausar congela o contador;
 bloquear a tela mantém o tempo ativo. Sair da tela exige confirmação e descarta
@@ -56,6 +65,7 @@ Os dois resumos finais do Stitch são variantes de uma mesma etapa, implementada
 como um resumo único com as escolhas atuais. Sons, bloqueio de notificações,
 alertas do sistema, troca de e-mail/senha e upload de avatar não estão incluídos
 nesta integração. Perfil edita nome e preferências de estudo. A rotina semanal
-representa disponibilidade, não sessões individuais agendadas. Métricas exibem
-somente tempo real de foco; questões e sugestões por desempenho continuam
-como funcionalidades futuras.
+representa disponibilidade; as sessões individuais ficam no cronograma semanal.
+As métricas usam ciclos de foco e registros de questões persistidos. A lista de
+tópicos urgentes usa acerto abaixo de 70% ou mais de sete dias sem questões
+registradas no tópico; ela ainda não registra a data de uma revisão de tópico.

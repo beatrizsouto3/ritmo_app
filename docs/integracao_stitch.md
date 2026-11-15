@@ -6,8 +6,8 @@ com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service
 | Referência | Acesso no aplicativo | Situação |
 |---|---|---|
 | Login e cadastro | Entrada antes de autenticar | Integrado na etapa anterior; e-mail e senha |
-| Dashboard / Hub | Início após autenticar | Atalhos, perfil e métricas reais de foco; sem métricas de questões ainda |
-| Grade de disciplinas / edital | Disciplinas → disciplina → tópicos | Integrado; cadastro e etapas dos tópicos |
+| Dashboard / Hub | Início após autenticar | Atalhos, perfil, métricas de foco e questões, sessões do dia e tópicos urgentes |
+| Grade de disciplinas / edital | Disciplinas → disciplina → tópicos | Integrado; cadastro, edição e exclusão de disciplinas e tópicos, com etapas dos tópicos |
 | Timer Pomodoro | Início → Foco ou cartão Pomodoro | Novo: seleção da disciplina, círculo, foco/pausas, início, pausa, cancelamento e retry ao salvar |
 | Revisão SRS | Flashcards → baralho → revisar | Fluxo existente atualizado com contexto do baralho, progresso e contadores reais |
 | Calibragem de matérias | Início → Encontre seu ritmo → passo 1 | Novo: objetivo, meta diária, durações e acesso ao cadastro real de disciplinas |
@@ -20,12 +20,16 @@ com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service
 ## Como preparar o banco
 
 Aplicar `schema.sql` se for um banco novo e as migrações na ordem do README.
-A nova `202611140002_study_preferences_sessions.sql` cria preferências e ciclos
-com RLS. As alterações não executam SQL automaticamente no projeto remoto.
+A migração `202611140002_study_preferences_sessions.sql` cria preferências e
+ciclos com RLS. A migração seguinte,
+`202611140003_schedule_questions_subjects.sql`, libera edição e exclusão de
+disciplinas e cria sessões planejadas e registros de questões com RLS.
+As alterações não executam SQL automaticamente no projeto remoto.
 
-Sem essa migração, perfil e configuração mostram erro com nova tentativa;
-o timer pode ser visualizado, mas uma conclusão só entra nas métricas quando
-for salva no banco. A autenticação segue obrigatória, sem modo de prévia.
+Sem a migração de preferências, perfil e configuração mostram erro com nova
+tentativa; uma conclusão do timer só entra nas métricas quando for salva no
+banco. Sem a migração seguinte, cronograma, questões e edição/exclusão de
+disciplinas não funcionam. A autenticação segue obrigatória, sem modo de prévia.
 
 ## Adaptações e pendências
 
@@ -36,10 +40,12 @@ pré-definido, aprovação estimada, streak, algoritmo SM-2 não implementado ou
 controles sem função de som/bloqueio de notificações.
 
 Perfil altera preferências de estudo; trocar senha/e-mail e enviar foto exigem
-fluxos próprios que não estão incluídos. Não há agendamento de sessões individuais,
-notificações locais, questões/simulados ou revisão urgente por desempenho nesta
-etapa. A tela de horários salva disponibilidade semanal. O módulo de métricas
-mostra apenas ciclos e horas de foco persistidos.
+fluxos próprios que não estão incluídos. O cronograma agenda sessões individuais;
+a tela de horários salva disponibilidade semanal. Não há notificações locais.
+Questões e simulados têm cadastro e histórico. O Dashboard sugere tópicos com
+acerto abaixo de 70% ou mais de sete dias sem questões, usando a última questão
+como referência temporal, e não uma data de revisão do tópico. As métricas
+mostram ciclos e horas de foco e a evolução dos acertos registrados.
 
 Um ciclo incompleto não sobrevive à morte do processo do app; sair da tela pede
 confirmação antes de descartá-lo. O timer continua durante bloqueio de tela e

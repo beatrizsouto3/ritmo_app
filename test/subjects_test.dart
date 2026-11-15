@@ -194,7 +194,7 @@ void main() {
     await tester.tap(find.text('Adicionar disciplina'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '   ');
-    await tester.tap(find.text('Salvar'));
+    await tester.tap(find.text('Cadastrar'));
     await tester.pumpAndSettle();
     expect(find.text('Informe o nome da disciplina.'), findsOneWidget);
     expect(service.saveCalls, 0);
@@ -204,7 +204,7 @@ void main() {
     await tester.tap(find.text('Adicionar disciplina'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '  Matemática  ');
-    await tester.tap(find.text('Salvar'));
+    await tester.tap(find.text('Cadastrar'));
     await tester.pumpAndSettle();
     expect(find.text('Matemática'), findsOneWidget);
     expect(find.text('Disciplina cadastrada.'), findsOneWidget);
@@ -230,7 +230,7 @@ void main() {
     await tester.tap(find.text('Adicionar disciplina'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), 'Física');
-    await tester.tap(find.text('Salvar'));
+    await tester.tap(find.text('Cadastrar'));
     await tester.pumpAndSettle();
     expect(
       find.text('Não foi possível salvar a disciplina. Tente novamente.'),
@@ -238,7 +238,7 @@ void main() {
     );
     expect(find.text('Física'), findsOneWidget);
     service.failSave = false;
-    await tester.tap(find.text('Salvar'));
+    await tester.tap(find.text('Cadastrar'));
     await tester.pumpAndSettle();
     expect(viewModel.subjects.single.name, 'Física');
     expect(tester.takeException(), isNull);
