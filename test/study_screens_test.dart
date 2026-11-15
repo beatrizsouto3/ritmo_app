@@ -154,7 +154,15 @@ void main() {
   ) async {
     final client = MockClient((request) async {
       if (request.url.path.endsWith('/disciplinas')) {
-        return http.Response('[{"id":3,"nome":"Matemática"}]', 200);
+        return http.Response.bytes(
+          utf8.encode(
+            jsonEncode([
+              {'id': 3, 'nome': 'Matemática'},
+            ]),
+          ),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
       }
       return http.Response('[]', 200);
     });
@@ -174,6 +182,7 @@ void main() {
     addTearDown(study.dispose);
     addTearDown(subjects.dispose);
     await subjects.loadSubjects();
+    expect(subjects.subjects.single.name, 'Matemática');
     await tester.pumpWidget(
       MultiProvider(
         providers: [
@@ -190,6 +199,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Matemática'), findsOneWidget);
+    expect(
+      tester
+          .widget<DropdownButtonFormField<int>>(
+            find.byType(DropdownButtonFormField<int>),
+          )
+          .initialValue,
+      3,
+    );
     final button = tester.widget<FilledButton>(
       find.widgetWithText(FilledButton, 'Iniciar / retomar'),
     );
