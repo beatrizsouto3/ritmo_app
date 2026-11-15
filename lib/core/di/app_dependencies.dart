@@ -22,6 +22,7 @@ import '../../ui/study/planned_sessions_view_model.dart';
 import '../config/supabase_config.dart';
 import '../../data/services/study_service.dart';
 import '../../data/repositories/study_repository.dart';
+import '../../domain/models/study_preferences.dart';
 import '../../ui/study/study_view_model.dart';
 import '../../ui/dashboard/dashboard_metrics_view_model.dart';
 
@@ -75,7 +76,18 @@ class AuthenticatedDependencies extends StatelessWidget {
             userId: () => context.read<AuthRepository>().userId!,
           ),
         ),
-        Provider(create: (context) => StudyRepository(context.read())),
+        Provider(
+          create: (context) {
+            final auth = context.read<AuthRepository>();
+            return StudyRepository(
+              context.read(),
+              initialPreferences: StudyPreferences(
+                name: auth.fullName ?? '',
+                goal: auth.studyGoal ?? 'Universidade',
+              ),
+            );
+          },
+        ),
         ChangeNotifierProvider(
           create: (context) => StudyViewModel(context.read())..load(),
         ),

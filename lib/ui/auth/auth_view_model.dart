@@ -26,9 +26,19 @@ class AuthViewModel extends ChangeNotifier {
     return _run(() => _repository.signIn(email.trim(), password));
   }
 
-  Future<bool> signUp(String email, String password) {
+  Future<bool> signUp(
+    String email,
+    String password, {
+    String? fullName,
+    String? goal,
+  }) {
     return _run(() async {
-      final authenticated = await _repository.signUp(email.trim(), password);
+      final authenticated = await _repository.signUp(
+        email.trim(),
+        password,
+        fullName: fullName?.trim(),
+        goal: goal,
+      );
       if (!authenticated) {
         _message = 'Confira seu e-mail para confirmar o cadastro. Depois, entre na sua conta.';
       }

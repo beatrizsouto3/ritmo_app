@@ -21,8 +21,18 @@ class AuthService {
     return AuthSession.fromJson(data);
   }
 
-  Future<AuthSession?> signUp(String email, String password) async {
-    final data = await _post('signup', {'email': email, 'password': password});
+  Future<AuthSession?> signUp(
+    String email,
+    String password, {
+    String? fullName,
+    String? goal,
+  }) async {
+    final data = await _post('signup', {
+      'email': email,
+      'password': password,
+      if (fullName != null && goal != null)
+        'data': {'full_name': fullName, 'study_goal': goal},
+    });
     if (data['access_token'] == null) {
       if (data['id'] is! String && data['user'] is! Map) {
         throw const FormatException('Resposta de cadastro inválida.');
