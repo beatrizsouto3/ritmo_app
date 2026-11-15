@@ -7,6 +7,7 @@ class StudyTopic {
     required this.theoryRead,
     required this.summaryMade,
     required this.exercisesSolved,
+    this.lastReviewedAt,
   });
 
   final int id;
@@ -16,6 +17,7 @@ class StudyTopic {
   final bool theoryRead;
   final bool summaryMade;
   final bool exercisesSolved;
+  final DateTime? lastReviewedAt;
 
   StudyTopic copyWith({
     String? name,
@@ -32,6 +34,7 @@ class StudyTopic {
       theoryRead: theoryRead ?? this.theoryRead,
       summaryMade: summaryMade ?? this.summaryMade,
       exercisesSolved: exercisesSolved ?? this.exercisesSolved,
+      lastReviewedAt: lastReviewedAt,
     );
   }
 

@@ -181,6 +181,12 @@ class TopicsView extends StatelessWidget {
           },
           onEdit: () => _openTopicForm(context, viewModel, topic: topic),
           onDelete: () => _confirmDelete(context, viewModel, topic),
+          onReview: () async {
+            final saved = await viewModel.markReviewed(topic.id);
+            if (!saved && context.mounted) {
+              _showError(context, viewModel.saveError);
+            }
+          },
         );
       },
     );
@@ -257,6 +263,7 @@ class _TopicCard extends StatelessWidget {
     required this.onChanged,
     required this.onEdit,
     required this.onDelete,
+    required this.onReview,
   });
 
   final StudyTopic topic;
@@ -264,6 +271,7 @@ class _TopicCard extends StatelessWidget {
   final ValueChanged<StudyTopic> onChanged;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -314,6 +322,17 @@ class _TopicCard extends StatelessWidget {
               enabled: !isSaving,
               onChanged: (value) =>
                   onChanged(topic.copyWith(exercisesSolved: value)),
+            ),
+            ListTile(
+              title: Text(
+                topic.lastReviewedAt == null
+                    ? 'Ainda não revisado'
+                    : 'Última revisão: ${MaterialLocalizations.of(context).formatMediumDate(topic.lastReviewedAt!.toLocal())}',
+              ),
+              trailing: TextButton(
+                onPressed: isSaving ? null : onReview,
+                child: const Text('Marcar revisão'),
+              ),
             ),
           ],
         ),

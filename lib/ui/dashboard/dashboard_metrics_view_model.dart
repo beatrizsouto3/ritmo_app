@@ -53,24 +53,20 @@ class DashboardMetricsViewModel extends ChangeNotifier {
     final result = <UrgentTopic>[];
     for (final topic in _allTopics) {
       final records = _records.where((row) => row.topicId == topic.id).toList();
-      if (records.isEmpty) continue;
       final total = records.fold(0, (sum, row) => sum + row.total);
       final correct = records.fold(0, (sum, row) => sum + row.correct);
-      final latest = records
-          .map((row) => row.recordedAt)
-          .reduce((a, b) => a.isAfter(b) ? a : b);
-      final accuracy = correct / total;
-      final lowAccuracy = accuracy < 0.7;
-      final overdue = latest.isBefore(cutoff);
-      if (lowAccuracy || overdue) {
-        result.add(
-          UrgentTopic(
-            topic,
-            lowAccuracy
-                ? '${(accuracy * 100).round()}% de acerto (abaixo de 70%)'
-                : 'Sem questões há mais de 7 dias',
-          ),
-        );
+      final accuracy = total == 0 ? null : correct / total;
+      final lastReviewedAt = topic.lastReviewedAt;
+      final overdue = lastReviewedAt == null || lastReviewedAt.isBefore(cutoff);
+      if (accuracy == null || accuracy < 0.7 || overdue) {
+        final reason = accuracy == null
+            ? 'Sem questões registradas'
+            : accuracy < 0.7
+            ? '${(accuracy * 100).round()}% de acerto (abaixo de 70%)'
+            : lastReviewedAt == null
+            ? 'Ainda não revisado'
+            : 'Última revisão há mais de 7 dias';
+        result.add(UrgentTopic(topic, reason));
       }
     }
     return result;

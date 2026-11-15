@@ -14,7 +14,8 @@ Provider e Supabase.
    [flashcards](supabase/migrations/202611120001_flashcards.sql),
    [tópicos](supabase/migrations/202611140001_topics.sql),
    [preferências e ciclos de foco](supabase/migrations/202611140002_study_preferences_sessions.sql)
-   e [cronograma, questões e edição de disciplinas](supabase/migrations/202611140003_schedule_questions_subjects.sql).
+   [cronograma, questões e edição de disciplinas](supabase/migrations/202611140003_schedule_questions_subjects.sql)
+   e [revisão de tópicos](supabase/migrations/202611150001_topic_reviews.sql).
    Em um banco já configurado, execute somente as migrações ainda não aplicadas,
    preservando essa ordem. Não execute novamente o esquema inicial nesse banco.
 3. Habilite autenticação por e-mail e confirmação de cadastro.
@@ -67,5 +68,6 @@ alertas do sistema, troca de e-mail/senha e upload de avatar não estão incluí
 nesta integração. Perfil edita nome e preferências de estudo. A rotina semanal
 representa disponibilidade; as sessões individuais ficam no cronograma semanal.
 As métricas usam ciclos de foco e registros de questões persistidos. A lista de
-tópicos urgentes usa acerto abaixo de 70% ou mais de sete dias sem questões
-registradas no tópico; ela ainda não registra a data de uma revisão de tópico.
+tópicos urgentes inclui tópicos sem questões, com acerto abaixo de 70%, nunca
+revisados ou cuja última revisão ocorreu há mais de sete dias. A revisão é
+registrada pela ação "Marcar revisão" na tela do tópico.

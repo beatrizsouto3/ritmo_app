@@ -244,7 +244,7 @@ class DashboardView extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 if (metrics.loaded && urgent.isEmpty)
-                  const Text('Nenhum tópico urgente com questões registradas.'),
+                  const Text('Nenhum tópico urgente no momento.'),
                 for (final item in urgent.take(5))
                   ListTile(
                     title: Text(item.topic.name),

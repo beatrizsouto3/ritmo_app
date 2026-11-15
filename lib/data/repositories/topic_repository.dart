@@ -49,6 +49,11 @@ class TopicRepository {
     return _service.deleteTopic(topicId);
   }
 
+  Future<StudyTopic> markReviewed(int topicId) async {
+    if (topicId <= 0) throw ArgumentError.value(topicId, 'topicId');
+    return _fromRow(await _service.markReviewed(topicId));
+  }
+
   void _validate({
     required int subjectId,
     required String name,
@@ -69,6 +74,11 @@ class TopicRepository {
       theoryRead: _requiredBool(row, TopicContract.theoryReadColumn),
       summaryMade: _requiredBool(row, TopicContract.summaryMadeColumn),
       exercisesSolved: _requiredBool(row, TopicContract.exercisesSolvedColumn),
+      lastReviewedAt: switch (row[TopicContract.lastReviewedAtColumn]) {
+        String value => DateTime.parse(value),
+        null => null,
+        _ => throw const FormatException('Data de revisão inválida.'),
+      },
     );
   }
 
