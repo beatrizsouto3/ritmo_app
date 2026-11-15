@@ -300,6 +300,7 @@ class _SessionFormState extends State<_SessionForm> {
             children: [
               DropdownButtonFormField<int>(
                 initialValue: _subjectId,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Disciplina'),
                 items: [
                   for (final subject in vm.subjects)
@@ -325,6 +326,7 @@ class _SessionFormState extends State<_SessionForm> {
                 initialValue: vm.topics.any((topic) => topic.id == _topicId)
                     ? _topicId
                     : null,
+                isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Tópico (opcional)',
                 ),
@@ -351,6 +353,7 @@ class _SessionFormState extends State<_SessionForm> {
                 ),
               DropdownButtonFormField<int>(
                 initialValue: _day,
+                isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Dia da semana'),
                 items: [
                   for (var i = 0; i < 7; i++)

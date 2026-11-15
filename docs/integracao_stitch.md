@@ -1,6 +1,6 @@
 # Integração dos protótipos Stitch
 
-Referências em `style/stitch_ritmo_study_platform/`. As telas são widgets Flutter,
+Referências em `style/`. As telas são widgets Flutter,
 com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service.
 
 | Referência | Acesso no aplicativo | Situação |

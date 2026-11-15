@@ -243,6 +243,96 @@ void main() {
     expect(viewModel.subjects.single.name, 'Física');
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('editing and confirmed deletion update a small subject screen', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var name = 'Matemática';
+    var deleted = false;
+    final client = MockClient((request) async {
+      expect(request.headers['authorization'], 'Bearer test-token');
+      if (request.method == 'GET') {
+        return _jsonResponse(
+          deleted
+              ? []
+              : [
+                  {'id': 3, 'nome': name},
+                ],
+        );
+      }
+      expect(request.url.queryParameters['id'], 'eq.3');
+      if (request.method == 'PATCH') {
+        name =
+            (jsonDecode(request.body) as Map<String, dynamic>)['nome']
+                as String;
+        return _jsonResponse([
+          {'id': 3},
+        ]);
+      }
+      if (request.method == 'DELETE') {
+        deleted = true;
+        return _jsonResponse([
+          {'id': 3},
+        ]);
+      }
+      fail('Método inesperado: ${request.method}');
+    });
+    addTearDown(client.close);
+    final viewModel = SubjectsViewModel(
+      SubjectRepository(
+        SubjectService(
+          config: config,
+          client: client,
+          accessToken: () async => 'test-token',
+        ),
+      ),
+    );
+    addTearDown(viewModel.dispose);
+    await viewModel.loadSubjects();
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: viewModel,
+        child: const MaterialApp(home: SubjectsView()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    Future<void> openActions() async {
+      final actions = find.byTooltip('Ações da disciplina');
+      await tester.ensureVisible(actions);
+      await tester.pumpAndSettle();
+      await tester.tap(actions);
+      await tester.pumpAndSettle();
+    }
+
+    await openActions();
+    await tester.tap(find.text('Editar'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'Física');
+    await tester.tap(find.text('Salvar alterações'));
+    await tester.pumpAndSettle();
+    expect(viewModel.subjects.single.name, 'Física');
+    expect(find.text('Física'), findsOneWidget);
+
+    await openActions();
+    await tester.tap(find.text('Excluir'));
+    await tester.pumpAndSettle();
+    expect(find.text('Excluir disciplina?'), findsOneWidget);
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    expect(deleted, isFalse);
+    await openActions();
+    await tester.tap(find.text('Excluir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Excluir').last);
+    await tester.pumpAndSettle();
+    expect(deleted, isTrue);
+    expect(find.text('Sua lista começa aqui'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _ControlledSubjectService extends SubjectService {

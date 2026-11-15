@@ -31,6 +31,9 @@ class QuestionRecordsViewModel extends ChangeNotifier {
   String? _loadError;
   String? _topicError;
   String? _saveError;
+  int? _filterSubjectId;
+  DateTime? _filterStart;
+  DateTime? _filterEnd;
 
   List<QuestionRecord> get records => List.unmodifiable(_records);
   List<Subject> get subjects => List.unmodifiable(_subjects);
@@ -41,6 +44,34 @@ class QuestionRecordsViewModel extends ChangeNotifier {
   String? get loadError => _loadError;
   String? get topicError => _topicError;
   String? get saveError => _saveError;
+  int? get filterSubjectId => _filterSubjectId;
+  DateTime? get filterStart => _filterStart;
+  DateTime? get filterEnd => _filterEnd;
+  List<QuestionRecord> get filteredRecords => List.unmodifiable(
+    _records.where((record) {
+      if (_filterSubjectId != null && record.subjectId != _filterSubjectId) {
+        return false;
+      }
+      final day = record.recordedAt.toLocal();
+      if (_filterStart != null &&
+          day.isBefore(
+            DateTime(
+              _filterStart!.year,
+              _filterStart!.month,
+              _filterStart!.day,
+            ),
+          )) {
+        return false;
+      }
+      if (_filterEnd != null &&
+          !day.isBefore(
+            DateTime(_filterEnd!.year, _filterEnd!.month, _filterEnd!.day + 1),
+          )) {
+        return false;
+      }
+      return true;
+    }),
+  );
   int get totalQuestions =>
       _records.fold(0, (sum, record) => sum + record.total);
   int get correctAnswers =>
@@ -157,6 +188,28 @@ class QuestionRecordsViewModel extends ChangeNotifier {
     _notify();
   }
 
+  void setSubjectFilter(int? subjectId) {
+    _filterSubjectId = subjectId;
+    _notify();
+  }
+
+  void setDateFilter(DateTime? start, DateTime? end) {
+    if ((start == null) != (end == null) ||
+        start != null && end != null && start.isAfter(end)) {
+      throw ArgumentError('Período inválido.');
+    }
+    _filterStart = start;
+    _filterEnd = end;
+    _notify();
+  }
+
+  void clearFilters() {
+    _filterSubjectId = null;
+    _filterStart = null;
+    _filterEnd = null;
+    _notify();
+  }
+
   Future<bool> createRecord({
     required int subjectId,
     required int? topicId,
@@ -198,6 +251,65 @@ class QuestionRecordsViewModel extends ChangeNotifier {
         error,
         stackTrace: stackTrace,
         fallback: 'Não foi possível salvar o registro. Tente novamente.',
+      );
+      return false;
+    } finally {
+      _isSaving = false;
+      _notify();
+    }
+  }
+
+  Future<bool> updateRecord(QuestionRecord record) async {
+    if (_isSaving || _isLoading) return false;
+    _saveError = _validate(
+      subjectId: record.subjectId,
+      total: record.total,
+      correct: record.correct,
+      incorrect: record.incorrect,
+    );
+    if (record.id <= 0) _saveError = 'Registro inválido.';
+    if (_saveError != null) {
+      _notify();
+      return false;
+    }
+    _isSaving = true;
+    _notify();
+    try {
+      final updated = await _questionRepository.update(record);
+      if (_disposed) return false;
+      _records = [
+        for (final current in _records)
+          if (current.id == updated.id) updated else current,
+      ]..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+      return true;
+    } catch (error, stackTrace) {
+      _saveError = requestErrorMessage(
+        error,
+        stackTrace: stackTrace,
+        fallback: 'Não foi possível atualizar o registro. Tente novamente.',
+      );
+      return false;
+    } finally {
+      _isSaving = false;
+      _notify();
+    }
+  }
+
+  Future<bool> deleteRecord(int id) async {
+    if (_isSaving || _isLoading) return false;
+    _isSaving = true;
+    _saveError = null;
+    _notify();
+    try {
+      await _questionRepository.delete(id);
+      if (_disposed) return false;
+      _records = _records.where((record) => record.id != id).toList();
+      return true;
+    } catch (error, stackTrace) {
+      _saveError = requestErrorMessage(
+        error,
+        stackTrace: stackTrace,
+        fallback: 'Não foi possível excluir o registro. Tente novamente.',
       );
       return false;
     } finally {
