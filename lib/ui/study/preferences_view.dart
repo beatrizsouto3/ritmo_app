@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../auth/auth_view_model.dart';
 import '../common/study_layout.dart';
 import '../subjects/subjects_view.dart';
 import '../subjects/subjects_view_model.dart';
@@ -70,15 +71,45 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                 'Tudo pronto para começar',
               ][vm.step]
             : 'Editar perfil',
+        actions: widget.onboarding && !Navigator.of(context).canPop()
+            ? [
+                IconButton(
+                  tooltip: 'Sair da conta',
+                  onPressed: () => context.read<AuthViewModel>().signOut(),
+                  icon: const Icon(Icons.logout_rounded),
+                ),
+              ]
+            : null,
         children: [
           if (widget.onboarding) ...[
-            LinearProgressIndicator(value: (vm.step + 1) / 3),
-            const SizedBox(height: 18),
-            Text(
-              'Passo ${vm.step + 1} de 3',
-              style: Theme.of(context).textTheme.labelLarge,
+            Row(
+              children: [
+                Text(
+                  'PASSO ${vm.step + 1} DE 3',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: const Color(0xFF002B52),
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    [
+                      'Matérias & Metas',
+                      'Rotina & Horários',
+                      'Seu plano',
+                    ][vm.step],
+                    textAlign: TextAlign.right,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelMedium
+                        ?.copyWith(color: const Color(0xFF33628A)),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            LinearProgressIndicator(value: (vm.step + 1) / 3),
+            const SizedBox(height: 22),
           ],
           Form(
             key: _form,
@@ -87,28 +118,35 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
               children: [
                 if (first) ...[
                   StudyPanel(
-                    dark: true,
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const CircleAvatar(
-                          backgroundColor: Color(0xFFA4D0FE),
-                          child: Icon(Icons.person_outline),
+                          backgroundColor: Color(0xFF002B52),
+                          foregroundColor: Colors.white,
+                          child: Icon(Icons.tune_rounded),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            widget.onboarding
-                                ? 'Seu plano começa com você'
-                                : 'Seu perfil de estudos',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                        const SizedBox(height: 14),
+                        Text(
+                          widget.onboarding
+                              ? 'Monte seu Ritmo'
+                              : 'Seu perfil de estudos',
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          widget.onboarding
+                              ? 'Personalize sua meta, suas matérias e seus blocos de foco.'
+                              : 'Ajuste suas metas e sua rotina de estudo.',
                         ),
                       ],
                     ),
+                  ),
+                  _sectionHeading(
+                    context,
+                    Icons.flag_outlined,
+                    '1. Foco principal',
                   ),
                   StudyPanel(
                     child: Column(
@@ -123,11 +161,6 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                           ),
                           onChanged: (value) =>
                               vm.change(vm.draft.copyWith(name: value)),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Foco principal',
-                          style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -145,7 +178,71 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                  StudyPanel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _sectionHeading(
+                          context,
+                          Icons.library_books_outlined,
+                          '2. Matérias do ciclo',
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          subjects.subjects.isEmpty
+                              ? 'Adicione suas primeiras disciplinas.'
+                              : subjects.subjects
+                                    .map((s) => s.name)
+                                    .join(' · '),
+                        ),
+                        const SizedBox(height: 8),
+                        OutlinedButton.icon(
+                          onPressed: vm.saving
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => const SubjectsView(),
+                                  ),
+                                ),
+                          icon: const Icon(Icons.menu_book_outlined),
+                          label: const Text('Gerenciar disciplinas'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _sectionHeading(
+                    context,
+                    Icons.timelapse_rounded,
+                    '3. Carga e foco',
+                  ),
+                  StudyPanel(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Meta de estudo diário',
+                          style: Theme.of(context).textTheme.titleSmall,
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final hours in [2, 4, 6])
+                              ChoiceChip(
+                                label: Text('$hours h'),
+                                selected: draft.dailyHours == hours,
+                                onSelected: vm.saving
+                                    ? null
+                                    : (_) => vm.change(
+                                        draft.copyWith(dailyHours: hours),
+                                      ),
+                              ),
+                          ],
+                        ),
                         _number(
                           'Meta diária de estudo (horas)',
                           draft.dailyHours,
@@ -181,45 +278,26 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                       ],
                     ),
                   ),
-                  StudyPanel(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Matérias do ciclo',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        Text(
-                          subjects.subjects.isEmpty
-                              ? 'Adicione suas primeiras disciplinas.'
-                              : subjects.subjects
-                                    .map((s) => s.name)
-                                    .join(' · '),
-                        ),
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: vm.saving
-                              ? null
-                              : () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => const SubjectsView(),
-                                  ),
-                                ),
-                          icon: const Icon(Icons.menu_book_outlined),
-                          label: const Text('Gerenciar disciplinas'),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
-                if (routine)
+                if (routine) ...[
+                  Text(
+                    'Defina seus horários',
+                    style: Theme.of(context).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'Escolha os dias e o turno em que prefere estudar.',
+                  ),
+                  const SizedBox(height: 20),
                   StudyPanel(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text(
-                          'Dias de estudo ativo',
-                          style: Theme.of(context).textTheme.titleMedium,
+                        _sectionHeading(
+                          context,
+                          Icons.calendar_month_outlined,
+                          '1. Dias de estudo ativo',
                         ),
                         const SizedBox(height: 12),
                         Wrap(
@@ -244,22 +322,78 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        DropdownButtonFormField<String>(
-                          initialValue: draft.shift,
-                          decoration: const InputDecoration(
-                            labelText: 'Melhor turno para estudar',
-                          ),
-                          items: [
-                            for (final shift in ['Manhã', 'Tarde', 'Noite'])
-                              DropdownMenuItem(
-                                value: shift,
-                                child: Text(shift),
-                              ),
-                          ],
-                          onChanged: vm.saving
-                              ? null
-                              : (v) => vm.change(draft.copyWith(shift: v)),
+                        _sectionHeading(
+                          context,
+                          Icons.wb_sunny_outlined,
+                          '2. Melhor turno para estudar',
                         ),
+                        const SizedBox(height: 10),
+                        for (final (shift, hours, icon) in [
+                          ('Manhã', '06:00–12:00', Icons.wb_sunny_outlined),
+                          ('Tarde', '12:00–18:00', Icons.wb_twilight_outlined),
+                          ('Noite', '18:00–23:00', Icons.nights_stay_outlined),
+                        ])
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Material(
+                              color: draft.shift == shift
+                                  ? const Color(0xFF0A4174)
+                                  : const Color(0xFFEFF4FF),
+                              borderRadius: BorderRadius.circular(16),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(16),
+                                onTap: vm.saving
+                                    ? null
+                                    : () => vm.change(
+                                        draft.copyWith(shift: shift),
+                                      ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(14),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        icon,
+                                        color: draft.shift == shift
+                                            ? Colors.white
+                                            : const Color(0xFF002B52),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              shift,
+                                              style: TextStyle(
+                                                color: draft.shift == shift
+                                                    ? Colors.white
+                                                    : const Color(0xFF001C38),
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            Text(
+                                              hours,
+                                              style: TextStyle(
+                                                color: draft.shift == shift
+                                                    ? Colors.white70
+                                                    : const Color(0xFF33628A),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (draft.shift == shift)
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: Colors.white,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         const SizedBox(height: 18),
                         const Text(
                           'Estes horários organizam sua rotina de estudo. Alertas do sistema ainda não estão disponíveis.',
@@ -267,7 +401,20 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                       ],
                     ),
                   ),
-                if (summary)
+                ],
+                if (summary) ...[
+                  Text(
+                    draft.name.trim().isEmpty
+                        ? 'Tudo pronto!'
+                        : 'Tudo pronto, ${draft.name.trim()}!',
+                    style: Theme.of(context).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Seu espaço de estudos está configurado com as escolhas abaixo.',
+                  ),
+                  const SizedBox(height: 20),
                   StudyPanel(
                     dark: true,
                     child: Column(
@@ -291,7 +438,7 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          '${draft.goal}\n${draft.dailyHours}h de estudo por dia · ${draft.shift}\n${draft.days.map((d) => _days[d - 1]).join(' · ')}\nFoco de ${draft.focusMinutes} min\n${subjects.subjects.length} disciplina(s) no ciclo',
+                          '${draft.goal}\n${draft.dailyHours}h de estudo por dia · ${draft.days.length} dia(s) por semana\n${draft.shift} · ${draft.days.map((d) => _days[d - 1]).join(' · ')}\nFoco de ${draft.focusMinutes} min + pausa de ${draft.shortBreak} min\n${subjects.subjects.length} disciplina(s) no ciclo',
                           style: const TextStyle(
                             color: Colors.white,
                             height: 1.8,
@@ -300,6 +447,7 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                       ],
                     ),
                   ),
+                ],
               ],
             ),
           ),
@@ -330,10 +478,9 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                     }
                     final saved = await vm.save(complete: widget.onboarding);
                     if (saved && context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Preferências salvas.')),
-                      );
+                      if (Navigator.of(context).canPop()) {
+                        Navigator.pop(context);
+                      }
                     }
                   },
             icon: Icon(
@@ -384,4 +531,24 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
             },
     ),
   );
+
+  Widget _sectionHeading(BuildContext context, IconData icon, String title) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Icon(icon, color: const Color(0xFF002B52), size: 20),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: const Color(0xFF002B52),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
 }

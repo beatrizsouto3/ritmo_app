@@ -12,6 +12,7 @@ import 'package:ritmo_app/data/repositories/auth_repository.dart';
 import 'package:ritmo_app/data/services/auth_service.dart';
 import 'package:ritmo_app/ui/auth/auth_view.dart';
 import 'package:ritmo_app/ui/auth/auth_view_model.dart';
+import 'package:ritmo_app/ui/dashboard/dashboard_view.dart';
 import 'package:ritmo_app/ui/subjects/subjects_view.dart';
 import 'package:ritmo_app/ui/flashcards/flashcards_view.dart';
 
@@ -243,12 +244,80 @@ void main() {
     },
   );
 
+  testWidgets('first login opens onboarding and completion opens dashboard', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Map<String, Object?>? preferences;
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/token')) {
+        return _response(_session());
+      }
+      if (request.url.path.endsWith('/preferencias_estudo')) {
+        if (request.method == 'POST') {
+          preferences = Map<String, Object?>.from(
+            jsonDecode(request.body) as Map,
+          );
+          return _response([preferences]);
+        }
+        return _response(preferences == null ? [] : [preferences]);
+      }
+      return _response([]);
+    });
+    addTearDown(client.close);
+    final repository = AuthRepository(
+      AuthService(config: _config, client: client),
+    );
+    final auth = AuthViewModel(repository);
+    addTearDown(repository.dispose);
+    addTearDown(auth.dispose);
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider.value(value: _config),
+          Provider<http.Client>.value(value: client),
+          ChangeNotifierProvider.value(value: repository),
+          ChangeNotifierProvider.value(value: auth),
+        ],
+        child: const RitmoApp(),
+      ),
+    );
+    await auth.signIn('bia@example.com', 'test-password');
+    await tester.pumpAndSettle();
+    expect(find.text('Monte seu Ritmo'), findsOneWidget);
+    expect(find.text('Continue por aqui'), findsNothing);
+    for (var step = 0; step < 2; step++) {
+      final continueButton = find.widgetWithText(FilledButton, 'Continuar');
+      await tester.scrollUntilVisible(
+        continueButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(continueButton);
+      await tester.pumpAndSettle();
+    }
+    final finish = find.widgetWithText(FilledButton, 'Salvar e continuar');
+    await tester.ensureVisible(finish);
+    await tester.tap(finish);
+    await tester.pumpAndSettle();
+    expect(preferences?['configurado'], isTrue);
+    expect(find.byType(DashboardView), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'logout from a nested route removes old subjects before another user logs in',
     (tester) async {
       var loginCount = 0;
       final client = MockClient((request) async {
         if (request.url.path.endsWith('/logout')) return http.Response('', 204);
+        if (request.url.path.endsWith('/preferencias_estudo')) {
+          return _response([_configuredPreferences()]);
+        }
+        if (request.url.path.endsWith('/sessoes_foco')) return _response([]);
         if (request.url.path.endsWith('/token')) {
           loginCount++;
           return _response(
@@ -312,6 +381,9 @@ void main() {
       var loginCount = 0;
       final client = MockClient((request) async {
         if (request.url.path.endsWith('/logout')) return http.Response('', 204);
+        if (request.url.path.endsWith('/preferencias_estudo')) {
+          return _response([_configuredPreferences()]);
+        }
         if (request.url.path.endsWith('/token')) {
           loginCount++;
           return _response(
@@ -380,6 +452,18 @@ Map<String, Object?> _session({
   'refresh_token': 'refresh-a',
   'expires_in': expiresIn,
   'user': {'id': userId},
+};
+
+Map<String, Object?> _configuredPreferences() => {
+  'nome': 'Pessoa',
+  'objetivo': 'Universidade',
+  'horas_diarias': 2,
+  'foco_minutos': 25,
+  'pausa_curta': 5,
+  'pausa_longa': 15,
+  'dias': [1, 2, 3, 4, 5],
+  'turno': 'Manhã',
+  'configurado': true,
 };
 
 http.Response _response(Object data, {int status = 200}) {
