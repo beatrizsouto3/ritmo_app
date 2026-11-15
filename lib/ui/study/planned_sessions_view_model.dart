@@ -116,6 +116,10 @@ class PlannedSessionsViewModel extends ChangeNotifier {
     saving = true;
     _notify();
     try {
+      if (await _repository.hasConflict(value)) {
+        actionError = 'Já existe uma sessão nesse horário.';
+        return false;
+      }
       final saved = value.id == 0
           ? await _repository.create(value)
           : await _repository.update(value);

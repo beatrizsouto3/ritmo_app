@@ -44,13 +44,14 @@ class QuestionRepository {
 
   Future<void> delete(int id) async {
     if (id <= 0) throw ArgumentError.value(id, 'id');
-    _single(
-      await _service.request(
-        'DELETE',
-        _table,
-        query: {'id': 'eq.$id', 'select': 'id'},
-      ),
+    final rows = await _service.request(
+      'DELETE',
+      _table,
+      query: {'id': 'eq.$id', 'select': 'id'},
     );
+    if (rows.length != 1 || rows.single['id'] != id) {
+      throw const FormatException('Registro de questões não encontrado.');
+    }
   }
 
   void _validate(QuestionRecord record) {

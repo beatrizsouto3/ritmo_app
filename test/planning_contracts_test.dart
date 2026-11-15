@@ -122,4 +122,69 @@ void main() {
       throwsArgumentError,
     );
   });
+
+  test('planned session deletion accepts the returned id only', () async {
+    final service = PlanningService(
+      config: config,
+      client: MockClient((request) async {
+        expect(request.method, 'DELETE');
+        expect(request.url.path, '/rest/v1/sessoes_planejadas');
+        expect(request.url.queryParameters['id'], 'eq.12');
+        return http.Response('[{"id":12}]', 200);
+      }),
+      accessToken: () async => 'access-token',
+    );
+    await PlannedSessionRepository(service).delete(12);
+  });
+
+  test(
+    'conflict lookup includes sessions crossing the week boundary',
+    () async {
+      var calls = 0;
+      final service = PlanningService(
+        config: config,
+        client: MockClient((request) async {
+          calls++;
+          expect(request.method, 'GET');
+          expect(request.url.path, '/rest/v1/sessoes_planejadas');
+          expect(request.url.queryParameters['select'], 'id');
+          final filters = request.url.queryParameters['and']!;
+          expect(filters, contains('estado.neq.cancelled'));
+          expect(filters, contains('id.neq.12'));
+          expect(filters, contains('inicio_em.lt.'));
+          expect(filters, contains('fim_em.gt.'));
+          return http.Response('[{"id":7}]', 200);
+        }),
+        accessToken: () async => 'access-token',
+      );
+      final session = PlannedSession(
+        id: 12,
+        subjectId: 3,
+        topicId: null,
+        startsAt: DateTime(2026, 11, 16, 0, 15),
+        endsAt: DateTime(2026, 11, 16, 1),
+        status: PlannedSessionStatus.planned,
+        notes: null,
+      );
+      expect(
+        await PlannedSessionRepository(service).hasConflict(session),
+        isTrue,
+      );
+      expect(calls, 1);
+      final cancelled = PlannedSession(
+        id: session.id,
+        subjectId: session.subjectId,
+        topicId: session.topicId,
+        startsAt: session.startsAt,
+        endsAt: session.endsAt,
+        status: PlannedSessionStatus.cancelled,
+        notes: session.notes,
+      );
+      expect(
+        await PlannedSessionRepository(service).hasConflict(cancelled),
+        isFalse,
+      );
+      expect(calls, 1);
+    },
+  );
 }
