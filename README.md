@@ -69,3 +69,5 @@ representa disponibilidade; as sessões individuais ficam no cronograma semanal.
 As métricas usam ciclos de foco e registros de questões persistidos. A lista de
 tópicos urgentes usa acerto abaixo de 70% ou mais de sete dias sem questões
 registradas no tópico; ela ainda não registra a data de uma revisão de tópico.
+
+Teste para eu ganhar a medalha
