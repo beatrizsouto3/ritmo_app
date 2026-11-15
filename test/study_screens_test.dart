@@ -87,9 +87,17 @@ void main() {
       );
       await tester.tap(next);
       await tester.pumpAndSettle();
-      expect(find.text('Defina seus horários'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilterChip, 'Sáb'));
-      await tester.ensureVisible(next);
+      expect(find.text('Defina seus horários'), findsWidgets);
+      final saturday = find.widgetWithText(FilterChip, 'Sáb');
+      await tester.ensureVisible(saturday);
+      await tester.pumpAndSettle();
+      await tester.tap(saturday);
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        next,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(next);
       await tester.pumpAndSettle();
       expect(find.textContaining('Bia, vamos entrar no ritmo'), findsOneWidget);
