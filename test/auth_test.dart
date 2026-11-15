@@ -10,6 +10,7 @@ import 'package:ritmo_app/app.dart';
 import 'package:ritmo_app/core/config/supabase_config.dart';
 import 'package:ritmo_app/data/repositories/auth_repository.dart';
 import 'package:ritmo_app/data/services/auth_service.dart';
+import 'package:ritmo_app/data/services/session_store.dart';
 import 'package:ritmo_app/ui/auth/auth_view.dart';
 import 'package:ritmo_app/ui/auth/auth_view_model.dart';
 import 'package:ritmo_app/ui/dashboard/dashboard_view.dart';
@@ -41,6 +42,92 @@ void main() {
     expect(session.userId, 'user-a');
     expect(session.accessToken, 'access-a');
     expect(session.expiresAt.isAfter(DateTime.now()), isTrue);
+  });
+
+  test('a saved session survives repository recreation', () async {
+    final store = _MemorySessionStore();
+    final client = MockClient((request) async {
+      expect(request.url.queryParameters['grant_type'], 'password');
+      return _response(_session());
+    });
+    addTearDown(client.close);
+    final service = AuthService(config: _config, client: client);
+    final first = AuthRepository(service, sessionStore: store);
+    await first.signIn('davi@example.com', 'test-password');
+    first.dispose();
+
+    final restored = AuthRepository(service, sessionStore: store);
+    addTearDown(restored.dispose);
+    await restored.restoreSession();
+    expect(restored.userId, 'user-a');
+    expect(await restored.getAccessToken(), 'access-a');
+  });
+
+  test('an expired saved session refreshes before use', () async {
+    final store = _MemorySessionStore();
+    var refreshCalls = 0;
+    final client = MockClient((request) async {
+      if (request.url.queryParameters['grant_type'] == 'password') {
+        return _response(_session(expiresIn: -60));
+      }
+      refreshCalls++;
+      expect(jsonDecode(request.body), {'refresh_token': 'refresh-a'});
+      return _response(_session(token: 'renewed-token'));
+    });
+    addTearDown(client.close);
+    final service = AuthService(config: _config, client: client);
+    final first = AuthRepository(service, sessionStore: store);
+    await first.signIn('davi@example.com', 'test-password');
+    first.dispose();
+
+    final restored = AuthRepository(service, sessionStore: store);
+    addTearDown(restored.dispose);
+    await restored.restoreSession();
+    expect(refreshCalls, 1);
+    expect(await restored.getAccessToken(), 'renewed-token');
+    expect(jsonDecode(store.value!)['access_token'], 'renewed-token');
+  });
+
+  test('a revoked saved refresh token clears the restored session', () async {
+    final store = _MemorySessionStore();
+    final client = MockClient((request) async {
+      if (request.url.queryParameters['grant_type'] == 'password') {
+        return _response(_session(expiresIn: -60));
+      }
+      return _response({'error_code': 'refresh_token_not_found'}, status: 400);
+    });
+    addTearDown(client.close);
+    final service = AuthService(config: _config, client: client);
+    final first = AuthRepository(service, sessionStore: store);
+    await first.signIn('davi@example.com', 'test-password');
+    first.dispose();
+
+    final restored = AuthRepository(service, sessionStore: store);
+    addTearDown(restored.dispose);
+    await restored.restoreSession();
+    expect(restored.userId, isNull);
+    expect(store.value, isNull);
+  });
+
+  test('sign out removes the saved session even if the server fails', () async {
+    final store = _MemorySessionStore();
+    final client = MockClient((request) async {
+      if (request.url.path.endsWith('/logout')) {
+        throw http.ClientException('Network error');
+      }
+      return _response(_session());
+    });
+    addTearDown(client.close);
+    final service = AuthService(config: _config, client: client);
+    final repository = AuthRepository(service, sessionStore: store);
+    addTearDown(repository.dispose);
+    await repository.signIn('davi@example.com', 'test-password');
+    await expectLater(
+      repository.signOut(),
+      throwsA(isA<http.ClientException>()),
+    );
+    expect(store.value, isNull);
+    expect(repository.userId, isNull);
   });
 
   test(
@@ -468,4 +555,21 @@ Map<String, Object?> _configuredPreferences() => {
 
 http.Response _response(Object data, {int status = 200}) {
   return http.Response.bytes(utf8.encode(jsonEncode(data)), status);
+}
+
+class _MemorySessionStore implements SessionStore {
+  String? value;
+
+  @override
+  Future<String?> read() async => value;
+
+  @override
+  Future<void> write(String value) async {
+    this.value = value;
+  }
+
+  @override
+  Future<void> clear() async {
+    value = null;
+  }
 }

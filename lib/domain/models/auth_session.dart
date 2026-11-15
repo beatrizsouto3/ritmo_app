@@ -11,6 +11,35 @@ class AuthSession {
   final String refreshToken;
   final DateTime expiresAt;
 
+  Map<String, Object?> toStoredJson() => {
+    'user_id': userId,
+    'access_token': accessToken,
+    'refresh_token': refreshToken,
+    'expires_at': expiresAt.toUtc().toIso8601String(),
+  };
+
+  factory AuthSession.fromStoredJson(Map<String, Object?> json) {
+    final userId = json['user_id'];
+    final accessToken = json['access_token'];
+    final refreshToken = json['refresh_token'];
+    final expiresAt = json['expires_at'];
+    if (userId is! String ||
+        userId.isEmpty ||
+        accessToken is! String ||
+        accessToken.isEmpty ||
+        refreshToken is! String ||
+        refreshToken.isEmpty ||
+        expiresAt is! String) {
+      throw const FormatException('Sessão salva inválida.');
+    }
+    return AuthSession(
+      userId: userId,
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      expiresAt: DateTime.parse(expiresAt),
+    );
+  }
+
   factory AuthSession.fromJson(Map<String, Object?> json) {
     final user = json['user'];
     final accessToken = json['access_token'];

@@ -17,8 +17,9 @@ class AuthViewModel extends ChangeNotifier {
 
   String? get userId => _repository.userId;
   bool get isAuthenticated => userId != null;
+  bool get isRestoring => _repository.isRestoring;
   bool get isBusy => _isBusy;
-  String? get error => _error;
+  String? get error => _error ?? _repository.restoreError;
   String? get message => _message;
 
   Future<bool> signIn(String email, String password) {
