@@ -9,12 +9,21 @@ class StudyViewModel extends ChangeNotifier {
   final StudyRepository _repository;
   StudyPreferences _preferences = const StudyPreferences();
   List<FocusSession> _sessions = [];
+  final Map<String, FocusSession> _recentSessions = {};
   bool busy = false, loaded = false, _disposed = false;
   String? error;
   StudyPreferences get preferences => _preferences;
   List<FocusSession> get sessions => List.unmodifiable(_sessions);
   int get totalSeconds =>
       _sessions.fold(0, (sum, session) => sum + session.seconds);
+
+  void recordCompletedSession(FocusSession session) {
+    if (_disposed || _sessions.any((saved) => saved.id == session.id)) return;
+    _recentSessions[session.id] = session;
+    _sessions = [session, ..._sessions];
+    _notify();
+  }
+
   Map<int, int> get secondsBySubject {
     final result = <int, int>{};
     for (final session in _sessions) {
@@ -37,7 +46,7 @@ class StudyViewModel extends ChangeNotifier {
       final sessions = await _repository.loadSessions();
       if (_disposed) return;
       _preferences = preferences;
-      _sessions = sessions;
+      _sessions = _mergeSessions(sessions);
       loaded = true;
     } catch (e, st) {
       error = requestErrorMessage(e, stackTrace: st);
@@ -70,8 +79,15 @@ class StudyViewModel extends ChangeNotifier {
   Future<void> refreshSessions() async {
     final sessions = await _repository.loadSessions();
     if (_disposed) return;
-    _sessions = sessions;
+    _sessions = _mergeSessions(sessions);
     _notify();
+  }
+
+  List<FocusSession> _mergeSessions(List<FocusSession> remote) {
+    for (final session in remote) {
+      _recentSessions.remove(session.id);
+    }
+    return [..._recentSessions.values, ...remote];
   }
 
   void _notify() {

@@ -6,7 +6,7 @@ com estado e comandos nos ViewModels e acesso ao Supabase por Repository/Service
 | Referência | Acesso no aplicativo | Situação |
 |---|---|---|
 | Login e cadastro | Entrada antes de autenticar | Integrado na etapa anterior; e-mail e senha |
-| Dashboard / Hub | Início após autenticar | Atalhos, perfil, métricas de foco e questões, sessões do dia e tópicos urgentes |
+| Dashboard / Hub | Início após autenticar | Meta de foco diário com progresso real, próxima sessão, revisões, cronograma, atalhos e navegação inferior |
 | Grade de disciplinas / edital | Disciplinas → disciplina → tópicos | Integrado; cadastro, edição e exclusão de disciplinas e tópicos, com etapas dos tópicos |
 | Timer Pomodoro | Início → Foco ou cartão Pomodoro | Novo: seleção da disciplina, círculo, foco/pausas, início, pausa, cancelamento e retry ao salvar |
 | Revisão SRS | Flashcards → baralho → revisar | Fluxo existente atualizado com contexto do baralho, progresso e contadores reais |
@@ -41,7 +41,9 @@ confirmar o cadastro. As escolhas são salvas ao concluir o terceiro passo.
 ## Adaptações e pendências
 
 As cores, cartões, hierarquia, seletor de modos e contador circular seguem o
-Stitch. Ainda não há equivalência visual exata: Plus Jakarta Sans e a marca
+Stitch. O Dashboard usa sessões concluídas no dia para calcular a barra da meta;
+questões e precisão vêm dos registros reais. Ainda não há equivalência visual
+exata: Plus Jakarta Sans e a marca
 final não estão empacotadas. Não são apresentados números fixos, nome de usuário
 pré-definido, aprovação estimada, streak, algoritmo SM-2 não implementado ou
 controles sem função de som/bloqueio de notificações.

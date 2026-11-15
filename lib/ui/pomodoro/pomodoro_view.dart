@@ -18,6 +18,7 @@ class PomodoroView extends StatelessWidget {
       context.read<StudyRepository>(),
       context.read<StudyViewModel>().preferences,
       initialSubjectId: initialSubjectId,
+      onSessionSaved: context.read<StudyViewModel>().recordCompletedSession,
     ),
     child: const _TimerScreen(),
   );
@@ -162,6 +163,18 @@ class _TimerScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 if (vm.saving) const LinearProgressIndicator(),
+                if (vm.sessionSaved)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      'Ciclo salvo! O tempo já entrou nas métricas da disciplina.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFF0A4174),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 12,
@@ -204,7 +217,7 @@ class _TimerScreen extends StatelessWidget {
                   ),
                 const SizedBox(height: 16),
                 const Text(
-                  'O timer continua ao bloquear a tela. Ao fechar o aplicativo, o ciclo incompleto é descartado.',
+                  'O tempo entra nas métricas ao concluir e salvar o foco. Pausas não contam. O timer continua ao bloquear a tela.',
                   textAlign: TextAlign.center,
                 ),
                 if (vm.error != null) ...[
