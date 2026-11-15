@@ -18,9 +18,13 @@ class RitmoApp extends StatelessWidget {
       title: 'Ritmo',
       debugShowCheckedModeBanner: false,
       theme: buildRitmoTheme(),
-      home: auth.isAuthenticated ? const DashboardView() : const AuthView(),
+      home: auth.isRestoring
+          ? const Scaffold(body: Center(child: CircularProgressIndicator()))
+          : auth.isAuthenticated
+          ? const DashboardView()
+          : const AuthView(),
     );
-    if (!auth.isAuthenticated) return app;
+    if (auth.isRestoring || !auth.isAuthenticated) return app;
     return AuthenticatedDependencies(key: ValueKey(auth.userId), child: app);
   }
 }

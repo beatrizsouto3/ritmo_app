@@ -6,6 +6,11 @@ Cadastro e login por e-mail, disciplinas e tópicos, cronograma semanal, questõ
 Pomodoro e flashcards com revisão espaçada por usuário. Arquitetura MVVM com
 Provider e Supabase.
 
+No Android, a sessão é guardada com uma chave do Android Keystore e restaurada
+ao abrir o app. O token é renovado quando necessário; sair da conta apaga a
+sessão salva. Após instalar esta versão sobre uma anterior, entre uma vez para
+criar a primeira sessão persistida.
+
 ## Configuração
 
 1. Copie [config/supabase.example.json](config/supabase.example.json) para `config/supabase.json` e preencha a URL e a chave pública do projeto.
