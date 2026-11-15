@@ -54,7 +54,7 @@ Após a autenticação, o Dashboard oferece configuração inicial em três pass
 (meta e matérias → dias e turno → resumo), edição de perfil de estudos,
 Pomodoro, disciplinas/tópicos, cronograma semanal, questões, flashcards e
 métricas de tempo e acerto. As migrações de preferências e ciclos de foco e de
-cronograma e questões são necessárias para persistir esses dados!
+cronograma e questões são necessárias para persistir esses dados.
 
 O Pomodoro admite foco e pausas configuráveis. Pausar congela o contador;
 bloquear a tela mantém o tempo ativo. Sair da tela exige confirmação e descarta
