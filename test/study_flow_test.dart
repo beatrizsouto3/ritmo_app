@@ -8,6 +8,7 @@ import 'package:ritmo_app/data/services/study_service.dart';
 import 'package:ritmo_app/data/repositories/study_repository.dart';
 import 'package:ritmo_app/domain/models/study_preferences.dart';
 import 'package:ritmo_app/ui/pomodoro/pomodoro_view_model.dart';
+import 'package:ritmo_app/ui/study/study_view_model.dart';
 
 class ControlledStopwatch extends Fake implements Stopwatch {
   int micros = 0;
@@ -81,10 +82,13 @@ void main() {
       });
       addTearDown(client.close);
       final clock = ControlledStopwatch();
+      final study = StudyViewModel(repository(client));
+      addTearDown(study.dispose);
       final vm = PomodoroViewModel(
         repository(client),
         const StudyPreferences(focusMinutes: 1),
         stopwatch: clock,
+        onSessionSaved: study.recordCompletedSession,
       );
       addTearDown(vm.dispose);
       vm.selectSubject(12);
@@ -102,6 +106,9 @@ void main() {
       expect(jsonDecode(requests[1].body)['segundos'], 60);
       expect(vm.mode, FocusMode.shortBreak);
       expect(vm.completedCycles, 1);
+      expect(vm.sessionSaved, isTrue);
+      expect(study.totalSeconds, 60);
+      expect(study.secondsBySubject[12], 60);
       expect(vm.remaining, 300);
     },
   );

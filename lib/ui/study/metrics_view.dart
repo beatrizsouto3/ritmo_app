@@ -37,7 +37,7 @@ class MetricsView extends StatelessWidget {
                 ),
               ),
               Text(
-                '${(vm.totalSeconds / 3600).toStringAsFixed(1)} h',
+                '${vm.totalSeconds ~/ 3600}h ${((vm.totalSeconds % 3600) ~/ 60).toString().padLeft(2, '0')}min',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 40,

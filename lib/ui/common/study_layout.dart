@@ -41,6 +41,13 @@ class StudyPanel extends StatelessWidget {
       gradient: dark
           ? const LinearGradient(colors: [Color(0xFF002B52), Color(0xFF0A4174)])
           : null,
+      boxShadow: const [
+        BoxShadow(
+          color: Color(0x12001D39),
+          blurRadius: 18,
+          offset: Offset(0, 5),
+        ),
+      ],
     ),
     child: child,
   );
