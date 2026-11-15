@@ -5,6 +5,7 @@ import '../auth/auth_view_model.dart';
 import '../pomodoro/pomodoro_view.dart';
 import '../study/preferences_view.dart';
 import '../study/metrics_view.dart';
+import '../study/planned_sessions_view.dart';
 import '../study/study_view_model.dart';
 import '../flashcards/flashcards_view.dart';
 import '../questions/question_records_view.dart';
@@ -145,6 +146,13 @@ class DashboardView extends StatelessWidget {
                   title: 'Pomodoro',
                   subtitle: 'Foco, pausas e tempo líquido por disciplina',
                   onTap: () => _open(context, const PomodoroView()),
+                ),
+                const SizedBox(height: 10),
+                _FeatureTile(
+                  icon: Icons.event_note_outlined,
+                  title: 'Cronograma semanal',
+                  subtitle: 'Planeje e acompanhe suas sessões de estudo',
+                  onTap: () => _open(context, const PlannedSessionsView()),
                 ),
                 const SizedBox(height: 10),
                 _FeatureTile(

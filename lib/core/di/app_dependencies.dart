@@ -17,6 +17,7 @@ import '../../ui/subjects/subjects_view_model.dart';
 import '../../ui/auth/auth_view_model.dart';
 import '../../ui/flashcards/flashcards_view_model.dart';
 import '../../ui/questions/question_records_view_model.dart';
+import '../../ui/study/planned_sessions_view_model.dart';
 import '../config/supabase_config.dart';
 import '../../data/services/study_service.dart';
 import '../../data/repositories/study_repository.dart';
@@ -98,6 +99,13 @@ class AuthenticatedDependencies extends StatelessWidget {
           ),
         ),
         Provider(create: (context) => PlannedSessionRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => PlannedSessionsViewModel(
+            context.read(),
+            context.read(),
+            context.read(),
+          )..load(),
+        ),
         Provider(create: (context) => QuestionRepository(context.read())),
         ChangeNotifierProvider(
           create: (context) => DashboardMetricsViewModel(
