@@ -78,7 +78,7 @@ class DashboardView extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Editar perfil',
+            tooltip: 'Editar plano de estudos',
             icon: const Icon(Icons.account_circle_rounded, size: 32),
             onPressed: () => _open(context, const PreferencesView()),
           ),
@@ -136,6 +136,14 @@ class DashboardView extends StatelessWidget {
                         final day = session.completedAt.toLocal();
                         return day.year == now.year && day.month == now.month && day.day == now.day;
                       }).length}',
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _open(context, const PreferencesView()),
+                    icon: const Icon(Icons.tune_rounded),
+                    label: const Text('Editar meta e Pomodoro'),
+                  ),
                 ),
                 const SizedBox(height: 26),
                 _SectionHeading(

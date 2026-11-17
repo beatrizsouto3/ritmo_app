@@ -11,6 +11,7 @@ import 'package:ritmo_app/data/services/study_service.dart';
 import 'package:ritmo_app/data/services/subject_service.dart';
 import 'package:ritmo_app/data/repositories/study_repository.dart';
 import 'package:ritmo_app/data/repositories/subject_repository.dart';
+import 'package:ritmo_app/domain/models/study_preferences.dart';
 import 'package:ritmo_app/ui/study/study_view_model.dart';
 import 'package:ritmo_app/ui/study/preferences_view.dart';
 import 'package:ritmo_app/ui/pomodoro/pomodoro_view.dart';
@@ -110,6 +111,126 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'editing preferences updates the focus duration after onboarding',
+    (tester) async {
+      Map<String, dynamic>? saved;
+      final client = MockClient((request) async {
+        if (request.method == 'POST') {
+          saved = jsonDecode(request.body) as Map<String, dynamic>;
+        }
+        return http.Response('[]', 200);
+      });
+      addTearDown(client.close);
+      final repo = StudyRepository(
+        StudyService(
+          config: config,
+          client: client,
+          accessToken: () async => 'token',
+          userId: () => 'user',
+        ),
+        initialPreferences: const StudyPreferences(
+          name: 'Bia',
+          focusMinutes: 25,
+          shift: 'Tarde',
+          configured: true,
+        ),
+      );
+      final study = StudyViewModel(repo);
+      final subjects = SubjectsViewModel(
+        SubjectRepository(SubjectService(config: config, client: client)),
+      );
+      addTearDown(study.dispose);
+      addTearDown(subjects.dispose);
+      await study.load();
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            Provider.value(value: repo),
+            ChangeNotifierProvider.value(value: study),
+            ChangeNotifierProvider.value(value: subjects),
+          ],
+          child: MaterialApp(
+            theme: buildRitmoTheme(),
+            home: const PreferencesView(),
+          ),
+        ),
+      );
+
+      final focusField = find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownButtonFormField<int> &&
+            widget.decoration.labelText == 'Bloco de foco (minutos)',
+      );
+      tester.widget<DropdownButtonFormField<int>>(focusField).onChanged!(30);
+      await tester.pump();
+      final saveButton = find.text('Salvar alterações');
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      await tester.pumpAndSettle();
+
+      expect(saved?['foco_minutos'], 30);
+      expect(saved?['turno'], 'Tarde');
+      expect(saved?['configurado'], isTrue);
+      expect(study.preferences.focusMinutes, 30);
+    },
+  );
+
+  testWidgets('Pomodoro uses the edited duration when returning to the timer', (
+    tester,
+  ) async {
+    final client = MockClient((_) async => http.Response('[]', 200));
+    addTearDown(client.close);
+    final repo = StudyRepository(
+      StudyService(
+        config: config,
+        client: client,
+        accessToken: () async => 'token',
+        userId: () => 'user',
+      ),
+      initialPreferences: const StudyPreferences(configured: true),
+    );
+    final study = StudyViewModel(repo);
+    final subjects = SubjectsViewModel(
+      SubjectRepository(SubjectService(config: config, client: client)),
+    );
+    addTearDown(study.dispose);
+    addTearDown(subjects.dispose);
+    await study.load();
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [
+          Provider.value(value: repo),
+          ChangeNotifierProvider.value(value: study),
+          ChangeNotifierProvider.value(value: subjects),
+        ],
+        child: MaterialApp(
+          theme: buildRitmoTheme(),
+          home: const PomodoroView(),
+        ),
+      ),
+    );
+
+    expect(find.text('25:00'), findsOneWidget);
+    final editButton = find.text('Editar tempos do Pomodoro');
+    await tester.ensureVisible(editButton);
+    await tester.tap(editButton);
+    await tester.pumpAndSettle();
+    final focusField = find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownButtonFormField<int> &&
+          widget.decoration.labelText == 'Bloco de foco (minutos)',
+    );
+    tester.widget<DropdownButtonFormField<int>>(focusField).onChanged!(30);
+    await tester.pump();
+    final saveButton = find.text('Salvar alterações');
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+
+    expect(find.text('30:00'), findsOneWidget);
+  });
 
   testWidgets(
     'timer fits a narrow screen without bypassing subject selection',

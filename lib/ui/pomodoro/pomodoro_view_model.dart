@@ -19,7 +19,7 @@ class PomodoroViewModel extends ChangeNotifier {
   }) : _watch = stopwatch ?? Stopwatch(),
        subjectId = initialSubjectId;
   final StudyRepository _repository;
-  final StudyPreferences preferences;
+  StudyPreferences preferences;
   final void Function(FocusSession)? onSessionSaved;
   FocusMode mode = FocusMode.focus;
   int? subjectId;
@@ -64,6 +64,12 @@ class PomodoroViewModel extends ChangeNotifier {
     if (hasStarted || saving) return;
     mode = value;
     error = null;
+    _notify();
+  }
+
+  void updatePreferences(StudyPreferences value) {
+    if (hasStarted || saving) return;
+    preferences = value;
     _notify();
   }
 
@@ -121,7 +127,7 @@ class PomodoroViewModel extends ChangeNotifier {
       _notify();
       return;
     }
-    final random = Random.secure();
+    final random = Random();
     _pending = FocusSession(
       id: '${DateTime.now().microsecondsSinceEpoch}-${random.nextInt(1 << 32)}',
       subjectId: subjectId!,

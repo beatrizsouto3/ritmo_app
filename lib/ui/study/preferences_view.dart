@@ -25,7 +25,7 @@ class PreferencesView extends StatelessWidget {
     final source = context.watch<StudyViewModel>();
     if (!source.loaded) {
       return StudyLayout(
-        title: onboarding ? 'Configurar estudos' : 'Editar perfil',
+        title: onboarding ? 'Configurar estudos' : 'Editar plano de estudos',
         children: [
           if (source.busy) const LinearProgressIndicator(),
           Text(source.error ?? 'Carregando suas preferências…'),
@@ -70,7 +70,7 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                 'Defina seus horários',
                 'Tudo pronto para começar',
               ][vm.step]
-            : 'Editar perfil',
+            : 'Editar plano de estudos',
         actions: widget.onboarding && !Navigator.of(context).canPop()
             ? [
                 IconButton(
@@ -138,7 +138,7 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                         Text(
                           widget.onboarding
                               ? 'Personalize sua meta, suas matérias e seus blocos de foco.'
-                              : 'Ajuste suas metas e sua rotina de estudo.',
+                              : 'Ajuste suas metas, disciplinas, tempos de foco e rotina.',
                         ),
                       ],
                     ),
@@ -493,7 +493,9 @@ class _PreferencesScreenState extends State<_PreferencesScreen> {
                     ? 'Salvando…'
                     : widget.onboarding && !summary
                     ? 'Continuar'
-                    : 'Salvar e continuar',
+                    : widget.onboarding
+                    ? 'Salvar e continuar'
+                    : 'Salvar alterações',
               ),
             ),
           ),

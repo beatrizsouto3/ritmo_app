@@ -69,11 +69,24 @@ class StudyService {
     'sessoes_foco',
     query: const {'order': 'concluido_em.desc'},
   );
-  Future<void> saveSession(Map<String, Object> values) => _request(
-    'POST',
-    'sessoes_foco',
-    query: const {'on_conflict': 'id'},
-    body: values,
-    ignoreDuplicate: true,
-  );
+  Future<void> saveSession(Map<String, Object> values) async {
+    final saved = await _request(
+      'POST',
+      'sessoes_foco',
+      query: const {'on_conflict': 'id'},
+      body: values,
+      ignoreDuplicate: true,
+    );
+    if (saved.any((row) => row['id'] == values['id'])) return;
+
+    final existing = await _request(
+      'GET',
+      'sessoes_foco',
+      query: {'id': 'eq.${values['id']}', 'select': 'id'},
+    );
+    if (existing.any((row) => row['id'] == values['id'])) return;
+    throw const SupabaseRequestException(
+      'Não foi possível confirmar o ciclo salvo. Tente salvar novamente.',
+    );
+  }
 }

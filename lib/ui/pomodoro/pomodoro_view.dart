@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-
 import '../../data/repositories/study_repository.dart';
 import '../common/main_navigation_bar.dart';
 import '../common/study_layout.dart';
+import '../study/preferences_view.dart';
 import '../study/study_view_model.dart';
 import '../subjects/subjects_view_model.dart';
 import 'focus_progress_ring.dart';
@@ -36,6 +36,17 @@ class _TimerScreen extends StatelessWidget {
   const _TimerScreen({required this.showNavigation});
 
   final bool showNavigation;
+  Future<void> _editPreferences(
+    BuildContext context,
+    PomodoroViewModel vm,
+  ) async {
+    await Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const PreferencesView()));
+    if (context.mounted) {
+      vm.updatePreferences(context.read<StudyViewModel>().preferences);
+    }
+  }
+
   Future<bool> _confirm(BuildContext context, String text) async =>
       await showDialog<bool>(
         context: context,
@@ -120,6 +131,12 @@ class _TimerScreen extends StatelessWidget {
                 ),
             ],
           ),
+          if (vm.mode != FocusMode.focus) ...[
+            const SizedBox(height: 8),
+            const Text(
+              'Pausas não somam tempo de estudo. Selecione Foco para registrar o tempo ao concluir o ciclo.',
+            ),
+          ],
           const SizedBox(height: 16),
           StudyPanel(
             child: DropdownButtonFormField<int>(
@@ -278,8 +295,21 @@ class _TimerScreen extends StatelessWidget {
             ),
           ),
           StudyPanel(
-            child: Text(
-              'Foco: ${vm.preferences.focusMinutes} min · pausa curta: ${vm.preferences.shortBreak} min · pausa longa: ${vm.preferences.longBreak} min.\nA pausa longa é oferecida a cada 4 ciclos. Configure as durações no perfil.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Foco: ${vm.preferences.focusMinutes} min · pausa curta: ${vm.preferences.shortBreak} min · pausa longa: ${vm.preferences.longBreak} min.\nA pausa longa é oferecida a cada 4 ciclos.',
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: vm.hasStarted || vm.saving
+                      ? null
+                      : () => _editPreferences(context, vm),
+                  icon: const Icon(Icons.tune_rounded),
+                  label: const Text('Editar tempos do Pomodoro'),
+                ),
+              ],
             ),
           ),
         ],
