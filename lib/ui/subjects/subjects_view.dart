@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/models/subject.dart';
+import '../common/main_navigation_bar.dart';
 import 'subject_form.dart';
 import 'topics_view.dart';
 import 'subjects_view_model.dart';
 
 class SubjectsView extends StatefulWidget {
-  const SubjectsView({super.key});
+  const SubjectsView({super.key, this.showNavigation = false});
+
+  final bool showNavigation;
 
   @override
   State<SubjectsView> createState() => _SubjectsViewState();
@@ -111,30 +114,44 @@ class _SubjectsViewState extends State<SubjectsView> {
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Center(
-          heightFactor: 1,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: viewModel.isLoading || viewModel.loadError != null
-                      ? null
-                      : () => _openForm(context),
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 14),
-                    child: Text('Adicionar disciplina'),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SafeArea(
+            top: false,
+            bottom: !widget.showNavigation,
+            child: Center(
+              heightFactor: 1,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed:
+                          viewModel.isLoading || viewModel.loadError != null
+                          ? null
+                          : () => _openForm(context),
+                      icon: const Icon(Icons.add_rounded),
+                      label: const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                        child: Text('Adicionar disciplina'),
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+          if (widget.showNavigation)
+            MainNavigationBar(
+              selectedIndex: 3,
+              onSelected: (index) {
+                if (index != 3) openMainDestination(context, index);
+              },
+            ),
+        ],
       ),
       body: SafeArea(
         child: Center(

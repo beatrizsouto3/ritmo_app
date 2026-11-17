@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/models/flashcard_deck.dart';
+import '../common/main_navigation_bar.dart';
 import 'flashcard_deck_form.dart';
 import 'flashcard_deck_view.dart';
 import 'flashcard_ui_helpers.dart';
 import 'flashcards_view_model.dart';
 
 class FlashcardsView extends StatelessWidget {
-  const FlashcardsView({super.key});
+  const FlashcardsView({super.key, this.showNavigation = false});
+
+  final bool showNavigation;
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +19,14 @@ class FlashcardsView extends StatelessWidget {
     return Scaffold(
       backgroundColor: flashcardCanvas,
       appBar: AppBar(title: const Text('Flashcards')),
+      bottomNavigationBar: showNavigation
+          ? MainNavigationBar(
+              selectedIndex: 2,
+              onSelected: (index) {
+                if (index != 2) openMainDestination(context, index);
+              },
+            )
+          : null,
       body: Column(
         children: [
           if (viewModel.errorMessage != null)

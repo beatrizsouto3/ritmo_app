@@ -9,11 +9,19 @@ ThemeData buildRitmoTheme() {
         onPrimaryContainer: const Color(0xFF002B52),
         secondary: const Color(0xFF33628A),
         secondaryContainer: const Color(0xFFA4D0FE),
+        onSecondaryContainer: const Color(0xFF2A5981),
         tertiary: const Color(0xFF002E39),
         tertiaryContainer: const Color(0xFFB3EBFF),
         surface: const Color(0xFFF8F9FF),
         onSurface: const Color(0xFF001C38),
+        onSurfaceVariant: const Color(0xFF42474F),
         outline: const Color(0xFF737780),
+        outlineVariant: const Color(0xFFC2C6D1),
+        surfaceContainerLowest: Colors.white,
+        surfaceContainerLow: const Color(0xFFEFF4FF),
+        surfaceContainer: const Color(0xFFE6EEFF),
+        surfaceContainerHigh: const Color(0xFFDCE9FF),
+        surfaceContainerHighest: const Color(0xFFD3E4FF),
       );
   return ThemeData(
     useMaterial3: true,
@@ -44,6 +52,7 @@ ThemeData buildRitmoTheme() {
       foregroundColor: scheme.onSurface,
       scrolledUnderElevation: 0,
       centerTitle: false,
+      surfaceTintColor: Colors.transparent,
     ),
     cardTheme: CardThemeData(
       color: Colors.white,
@@ -75,10 +84,24 @@ ThemeData buildRitmoTheme() {
         textStyle: const TextStyle(fontWeight: FontWeight.w700),
       ),
     ),
+    chipTheme: ChipThemeData(
+      backgroundColor: scheme.surfaceContainer,
+      selectedColor: scheme.primaryContainer,
+      labelStyle: TextStyle(color: scheme.onSurface, fontWeight: FontWeight.w600),
+      side: BorderSide.none,
+      shape: const StadiumBorder(),
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: scheme.primaryContainer,
+      linearTrackColor: scheme.surfaceContainerHigh,
+      circularTrackColor: scheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(99),
+    ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: scheme.surface,
+      backgroundColor: scheme.surfaceContainerLowest,
       indicatorColor: const Color(0xFFDCE9FF),
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      elevation: 0,
     ),
   );
 }

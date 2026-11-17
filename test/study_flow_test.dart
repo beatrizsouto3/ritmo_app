@@ -73,12 +73,25 @@ void main() {
     'completed focus retries the same id after failure and starts a break',
     (tester) async {
       final requests = <http.Request>[];
+      Map<String, dynamic>? savedSession;
       final client = MockClient((request) async {
         requests.add(request);
-        return http.Response(
-          requests.length == 1 ? '{"message":"unavailable"}' : '[]',
-          requests.length == 1 ? 503 : 201,
-        );
+        if (request.method == 'GET') {
+          return http.Response(
+            request.url.path.endsWith('/sessoes_foco')
+                ? jsonEncode([savedSession])
+                : '[]',
+            200,
+          );
+        }
+        if (savedSession != null) {
+          return http.Response(jsonEncode([savedSession]), 201);
+        }
+        if (requests.where((item) => item.method == 'POST').length == 1) {
+          return http.Response('{"message":"unavailable"}', 503);
+        }
+        savedSession = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(jsonEncode([savedSession]), 201);
       });
       addTearDown(client.close);
       final clock = ControlledStopwatch();
@@ -110,6 +123,67 @@ void main() {
       expect(study.totalSeconds, 60);
       expect(study.secondsBySubject[12], 60);
       expect(vm.remaining, 300);
+
+      final reloadedStudy = StudyViewModel(repository(client));
+      addTearDown(reloadedStudy.dispose);
+      await reloadedStudy.load();
+      expect(reloadedStudy.totalSeconds, 60);
+      expect(reloadedStudy.secondsBySubject[12], 60);
+    },
+  );
+
+  testWidgets('empty save response keeps focus pending until it is confirmed', (
+    tester,
+  ) async {
+    final client = MockClient((_) async => http.Response('[]', 200));
+    addTearDown(client.close);
+    final clock = ControlledStopwatch();
+    final study = StudyViewModel(repository(client));
+    addTearDown(study.dispose);
+    final vm = PomodoroViewModel(
+      repository(client),
+      const StudyPreferences(focusMinutes: 1),
+      stopwatch: clock,
+      onSessionSaved: study.recordCompletedSession,
+    );
+    addTearDown(vm.dispose);
+    vm.selectSubject(12);
+    vm.toggle();
+    clock.micros = 60 * 1000000;
+    await tester.pump(const Duration(seconds: 1));
+
+    expect(vm.needsSave, isTrue);
+    expect(vm.sessionSaved, isFalse);
+    expect(study.totalSeconds, 0);
+    expect(vm.error, contains('confirmar o ciclo salvo'));
+  });
+
+  test(
+    'a retry succeeds when the cycle already exists on the server',
+    () async {
+      final requests = <http.Request>[];
+      final session = FocusSession(
+        id: 'saved-cycle',
+        subjectId: 12,
+        seconds: 60,
+        completedAt: DateTime(2026, 11, 17),
+      );
+      final client = MockClient((request) async {
+        requests.add(request);
+        if (request.method == 'POST') return http.Response('[]', 201);
+        return http.Response(
+          jsonEncode([
+            {'id': session.id},
+          ]),
+          200,
+        );
+      });
+      addTearDown(client.close);
+
+      await repository(client).saveSession(session);
+
+      expect(requests.map((request) => request.method), ['POST', 'GET']);
+      expect(requests.last.url.queryParameters['id'], 'eq.${session.id}');
     },
   );
 

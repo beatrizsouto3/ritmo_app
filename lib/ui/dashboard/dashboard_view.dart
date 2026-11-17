@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../domain/models/planned_session.dart';
 import '../../domain/models/subject.dart';
 import '../auth/auth_view_model.dart';
+import '../common/ritmo_logo.dart';
+import '../common/main_navigation_bar.dart';
 import '../flashcards/flashcards_view.dart';
 import '../pomodoro/pomodoro_view.dart';
 import '../questions/question_records_view.dart';
@@ -55,22 +57,28 @@ class DashboardView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 20,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: const Row(
           children: [
-            Text(
-              'Ritmo',
-              style: TextStyle(fontWeight: FontWeight.w700, height: 1.1),
-            ),
-            Text(
-              'Início',
-              style: TextStyle(fontSize: 12, color: Color(0xFF33628A)),
+            RitmoLogo(size: 38),
+            SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Ritmo',
+                  style: TextStyle(fontWeight: FontWeight.w700, height: 1.1),
+                ),
+                Text(
+                  'Início',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF33628A)),
+                ),
+              ],
             ),
           ],
         ),
         actions: [
           IconButton(
-            tooltip: 'Editar perfil',
+            tooltip: 'Editar plano de estudos',
             icon: const Icon(Icons.account_circle_rounded, size: 32),
             onPressed: () => _open(context, const PreferencesView()),
           ),
@@ -129,6 +137,14 @@ class DashboardView extends StatelessWidget {
                         return day.year == now.year && day.month == now.month && day.day == now.day;
                       }).length}',
                 ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => _open(context, const PreferencesView()),
+                    icon: const Icon(Icons.tune_rounded),
+                    label: const Text('Editar meta e Pomodoro'),
+                  ),
+                ),
                 const SizedBox(height: 26),
                 _SectionHeading(
                   title: 'PRÓXIMO BLOCO DE IMERSÃO',
@@ -149,7 +165,10 @@ class DashboardView extends StatelessWidget {
                   focusMinutes: study.preferences.focusMinutes,
                   onStart: () => _open(
                     context,
-                    PomodoroView(initialSubjectId: nextSession?.subjectId),
+                    PomodoroView(
+                      initialSubjectId: nextSession?.subjectId,
+                      showNavigation: true,
+                    ),
                   ),
                   onPlan: () => _open(context, const PlannedSessionsView()),
                 ),
@@ -176,13 +195,19 @@ class DashboardView extends StatelessWidget {
                         'Disciplina',
                     topic: item.topic.name,
                     reason: item.reason,
-                    onOpen: () => _open(context, const SubjectsView()),
+                    onOpen: () => _open(
+                      context,
+                      const SubjectsView(showNavigation: true),
+                    ),
                   ),
                 if (urgent.isNotEmpty)
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () => _open(context, const SubjectsView()),
+                      onPressed: () => _open(
+                        context,
+                        const SubjectsView(showNavigation: true),
+                      ),
                       child: const Text('Ver disciplinas'),
                     ),
                   ),
@@ -234,7 +259,10 @@ class DashboardView extends StatelessWidget {
                             trailing: const Icon(Icons.play_arrow_rounded),
                             onTap: () => _open(
                               context,
-                              PomodoroView(initialSubjectId: session.subjectId),
+                              PomodoroView(
+                                initialSubjectId: session.subjectId,
+                                showNavigation: true,
+                              ),
                             ),
                           ),
                       ],
@@ -252,13 +280,17 @@ class DashboardView extends StatelessWidget {
                   subtitle: subjects.isLoading
                       ? 'Carregando disciplinas…'
                       : '${subjects.subjects.length} cadastrada(s)',
-                  onTap: () => _open(context, const SubjectsView()),
+                  onTap: () =>
+                      _open(context, const SubjectsView(showNavigation: true)),
                 ),
                 _FeatureTile(
                   icon: Icons.style_rounded,
                   title: 'Flashcards',
                   subtitle: 'Crie baralhos e revise seus cartões',
-                  onTap: () => _open(context, const FlashcardsView()),
+                  onTap: () => _open(
+                    context,
+                    const FlashcardsView(showNavigation: true),
+                  ),
                 ),
                 _FeatureTile(
                   icon: Icons.quiz_outlined,
@@ -270,7 +302,8 @@ class DashboardView extends StatelessWidget {
                   icon: Icons.insights_outlined,
                   title: 'Métricas',
                   subtitle: 'Acompanhe seus ciclos e horas de estudo',
-                  onTap: () => _open(context, const MetricsView()),
+                  onTap: () =>
+                      _open(context, const MetricsView(showNavigation: true)),
                 ),
                 if (subjects.loadError != null)
                   TextButton.icon(
@@ -283,35 +316,21 @@ class DashboardView extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: NavigationBar(
+      bottomNavigationBar: MainNavigationBar(
         selectedIndex: 0,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.dashboard_rounded),
-            label: 'Início',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.timer_outlined),
-            label: 'Pomodoro',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.style_outlined),
-            label: 'Flashcards',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            label: 'Disciplinas',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.insights_outlined),
-            label: 'Métricas',
-          ),
-        ],
-        onDestinationSelected: (index) {
-          if (index == 1) _open(context, const PomodoroView());
-          if (index == 2) _open(context, const FlashcardsView());
-          if (index == 3) _open(context, const SubjectsView());
-          if (index == 4) _open(context, const MetricsView());
+        onSelected: (index) {
+          if (index == 1) {
+            _open(context, const PomodoroView(showNavigation: true));
+          }
+          if (index == 2) {
+            _open(context, const FlashcardsView(showNavigation: true));
+          }
+          if (index == 3) {
+            _open(context, const SubjectsView(showNavigation: true));
+          }
+          if (index == 4) {
+            _open(context, const MetricsView(showNavigation: true));
+          }
         },
       ),
     );
