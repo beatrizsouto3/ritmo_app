@@ -16,7 +16,11 @@ class UrgentTopic {
 }
 
 class DashboardMetricsViewModel extends ChangeNotifier {
-  DashboardMetricsViewModel(this._questions, this._topics, this._planned);
+  DashboardMetricsViewModel(this._questions, this._topics, this._planned) {
+    _questions.addListener(_onRecordsChanged);
+    _topics.addListener(_onTopicsChanged);
+    _planned.addListener(_onSessionsChanged);
+  }
 
   final QuestionRepository _questions;
   final TopicRepository _topics;
@@ -48,6 +52,15 @@ class DashboardMetricsViewModel extends ChangeNotifier {
         row.status == PlannedSessionStatus.planned;
   }).toList();
 
+  List<PlannedSession> orderedSessionsToday(DateTime now) =>
+      sessionsToday(now)
+        ..sort((first, second) => first.startsAt.compareTo(second.startsAt));
+
+  PlannedSession? nextSession(DateTime now) =>
+      orderedSessionsToday(now)
+          .where((session) => session.endsAt.isAfter(now))
+          .firstOrNull;
+
   List<UrgentTopic> urgentTopics(DateTime now) {
     final cutoff = now.subtract(const Duration(days: 7));
     final result = <UrgentTopic>[];
@@ -78,15 +91,15 @@ class DashboardMetricsViewModel extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      final results = await Future.wait<Object>([
+      await Future.wait<Object>([
         _questions.getRecords(),
         _topics.getAllTopics(),
         _planned.getWeek(DateTime.now()),
       ]);
       if (_disposed) return;
-      _records = results[0] as List<QuestionRecord>;
-      _allTopics = results[1] as List<StudyTopic>;
-      _week = results[2] as List<PlannedSession>;
+      _records = _questions.currentRecords;
+      _allTopics = _topics.currentTopics;
+      _week = _planned.currentWeek(DateTime.now());
       loaded = true;
     } catch (e, st) {
       error = requestErrorMessage(e, stackTrace: st);
@@ -96,9 +109,30 @@ class DashboardMetricsViewModel extends ChangeNotifier {
     }
   }
 
+  void _onRecordsChanged() {
+    if (_disposed) return;
+    _records = _questions.currentRecords;
+    notifyListeners();
+  }
+
+  void _onSessionsChanged() {
+    if (_disposed) return;
+    _week = _planned.currentWeek(DateTime.now());
+    notifyListeners();
+  }
+
+  void _onTopicsChanged() {
+    if (_disposed) return;
+    _allTopics = _topics.currentTopics;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _disposed = true;
+    _questions.removeListener(_onRecordsChanged);
+    _topics.removeListener(_onTopicsChanged);
+    _planned.removeListener(_onSessionsChanged);
     super.dispose();
   }
 }

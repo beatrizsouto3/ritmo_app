@@ -13,7 +13,10 @@ class PlannedSessionsViewModel extends ChangeNotifier {
     this._repository,
     this._subjectsRepository,
     this._topicsRepository,
-  ) : weekStart = _monday(DateTime.now());
+  ) : weekStart = _monday(DateTime.now()) {
+    _repository.addListener(_onSessionsChanged);
+    _subjectsRepository.addListener(_onSubjectsChanged);
+  }
 
   final PlannedSessionRepository _repository;
   final SubjectRepository _subjectsRepository;
@@ -47,13 +50,13 @@ class PlannedSessionsViewModel extends ChangeNotifier {
     error = null;
     _notify();
     try {
-      final result = await Future.wait<Object>([
+      await Future.wait<Object>([
         _repository.getWeek(weekStart),
         _subjectsRepository.getSubjects(),
       ]);
       if (_disposed) return;
-      sessions = result[0] as List<PlannedSession>;
-      subjects = result[1] as List<Subject>;
+      sessions = _repository.currentWeek(weekStart);
+      subjects = _subjectsRepository.currentSubjects;
     } catch (e, st) {
       error = requestErrorMessage(e, stackTrace: st);
     } finally {
@@ -120,15 +123,11 @@ class PlannedSessionsViewModel extends ChangeNotifier {
         actionError = 'Já existe uma sessão nesse horário.';
         return false;
       }
-      final saved = value.id == 0
+      value.id == 0
           ? await _repository.create(value)
           : await _repository.update(value);
       if (_disposed) return false;
-      sessions = [
-        for (final item in sessions)
-          if (item.id != saved.id) item,
-        saved,
-      ]..sort((a, b) => a.startsAt.compareTo(b.startsAt));
+      sessions = _repository.currentWeek(weekStart);
       return true;
     } catch (e, st) {
       actionError = requestErrorMessage(e, stackTrace: st);
@@ -160,7 +159,7 @@ class PlannedSessionsViewModel extends ChangeNotifier {
     try {
       await _repository.delete(id);
       if (_disposed) return false;
-      sessions = sessions.where((item) => item.id != id).toList();
+      sessions = _repository.currentWeek(weekStart);
       return true;
     } catch (e, st) {
       actionError = requestErrorMessage(e, stackTrace: st);
@@ -175,9 +174,23 @@ class PlannedSessionsViewModel extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  void _onSessionsChanged() {
+    if (_disposed) return;
+    sessions = _repository.currentWeek(weekStart);
+    _notify();
+  }
+
+  void _onSubjectsChanged() {
+    if (_disposed) return;
+    subjects = _subjectsRepository.currentSubjects;
+    _notify();
+  }
+
   @override
   void dispose() {
     _disposed = true;
+    _repository.removeListener(_onSessionsChanged);
+    _subjectsRepository.removeListener(_onSubjectsChanged);
     _topicRequest++;
     super.dispose();
   }

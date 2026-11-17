@@ -55,7 +55,7 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            Provider.value(value: repo),
+            ChangeNotifierProvider.value(value: repo),
             ChangeNotifierProvider.value(value: study),
             ChangeNotifierProvider.value(value: subjects),
           ],
@@ -147,7 +147,7 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            Provider.value(value: repo),
+            ChangeNotifierProvider.value(value: repo),
             ChangeNotifierProvider.value(value: study),
             ChangeNotifierProvider.value(value: subjects),
           ],
@@ -166,7 +166,11 @@ void main() {
       tester.widget<DropdownButtonFormField<int>>(focusField).onChanged!(30);
       await tester.pump();
       final saveButton = find.text('Salvar alterações');
-      await tester.ensureVisible(saveButton);
+      await tester.scrollUntilVisible(
+        saveButton,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(saveButton);
       await tester.pumpAndSettle();
 
@@ -201,7 +205,7 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          Provider.value(value: repo),
+          ChangeNotifierProvider.value(value: repo),
           ChangeNotifierProvider.value(value: study),
           ChangeNotifierProvider.value(value: subjects),
         ],
@@ -214,7 +218,11 @@ void main() {
 
     expect(find.text('25:00'), findsOneWidget);
     final editButton = find.text('Editar tempos do Pomodoro');
-    await tester.ensureVisible(editButton);
+    await tester.scrollUntilVisible(
+      editButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(editButton);
     await tester.pumpAndSettle();
     final focusField = find.byWidgetPredicate(
@@ -225,7 +233,11 @@ void main() {
     tester.widget<DropdownButtonFormField<int>>(focusField).onChanged!(30);
     await tester.pump();
     final saveButton = find.text('Salvar alterações');
-    await tester.ensureVisible(saveButton);
+    await tester.scrollUntilVisible(
+      saveButton,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(saveButton);
     await tester.pumpAndSettle();
 
@@ -258,7 +270,7 @@ void main() {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
-            Provider.value(value: repo),
+            ChangeNotifierProvider.value(value: repo),
             ChangeNotifierProvider.value(value: study),
             ChangeNotifierProvider.value(value: subjects),
           ],
@@ -315,7 +327,7 @@ void main() {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          Provider.value(value: repo),
+          ChangeNotifierProvider.value(value: repo),
           ChangeNotifierProvider.value(value: study),
           ChangeNotifierProvider.value(value: subjects),
         ],

@@ -76,7 +76,7 @@ class AuthenticatedDependencies extends StatelessWidget {
             userId: () => context.read<AuthRepository>().userId!,
           ),
         ),
-        Provider(
+        ChangeNotifierProvider(
           create: (context) {
             final auth = context.read<AuthRepository>();
             return StudyRepository(
@@ -98,7 +98,9 @@ class AuthenticatedDependencies extends StatelessWidget {
             accessToken: context.read<AuthRepository>().getAccessToken,
           ),
         ),
-        Provider(create: (context) => SubjectRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => SubjectRepository(context.read()),
+        ),
         Provider(
           create: (context) => TopicService(
             config: context.read(),
@@ -106,7 +108,9 @@ class AuthenticatedDependencies extends StatelessWidget {
             accessToken: context.read<AuthRepository>().getAccessToken,
           ),
         ),
-        Provider(create: (context) => TopicRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => TopicRepository(context.read()),
+        ),
         Provider(
           create: (context) => PlanningService(
             config: context.read(),
@@ -114,7 +118,9 @@ class AuthenticatedDependencies extends StatelessWidget {
             accessToken: context.read<AuthRepository>().getAccessToken,
           ),
         ),
-        Provider(create: (context) => PlannedSessionRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => PlannedSessionRepository(context.read()),
+        ),
         ChangeNotifierProvider(
           create: (context) => PlannedSessionsViewModel(
             context.read(),
@@ -122,7 +128,9 @@ class AuthenticatedDependencies extends StatelessWidget {
             context.read(),
           )..load(),
         ),
-        Provider(create: (context) => QuestionRepository(context.read())),
+        ChangeNotifierProvider(
+          create: (context) => QuestionRepository(context.read()),
+        ),
         ChangeNotifierProvider(
           create: (context) => DashboardMetricsViewModel(
             context.read(),

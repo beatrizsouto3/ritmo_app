@@ -5,11 +5,12 @@ import '../../data/repositories/study_repository.dart';
 import '../../domain/models/study_preferences.dart';
 
 class StudyViewModel extends ChangeNotifier {
-  StudyViewModel(this._repository);
+  StudyViewModel(this._repository) {
+    _repository.addListener(_onRepositoryChanged);
+  }
   final StudyRepository _repository;
   StudyPreferences _preferences = const StudyPreferences();
   List<FocusSession> _sessions = [];
-  final Map<String, FocusSession> _recentSessions = {};
   bool busy = false, loaded = false, _disposed = false;
   String? error;
   StudyPreferences get preferences => _preferences;
@@ -17,12 +18,21 @@ class StudyViewModel extends ChangeNotifier {
   int get totalSeconds =>
       _sessions.fold(0, (sum, session) => sum + session.seconds);
 
-  void recordCompletedSession(FocusSession session) {
-    if (_disposed || _sessions.any((saved) => saved.id == session.id)) return;
-    _recentSessions[session.id] = session;
-    _sessions = [session, ..._sessions];
-    _notify();
-  }
+  List<FocusSession> sessionsOn(DateTime date) => _sessions.where((session) {
+    final day = session.completedAt.toLocal();
+    return day.year == date.year &&
+        day.month == date.month &&
+        day.day == date.day;
+  }).toList();
+
+  int secondsOn(DateTime date) =>
+      sessionsOn(date).fold(0, (total, session) => total + session.seconds);
+
+  double dailyProgress(DateTime date) =>
+      (secondsOn(date) / (_preferences.dailyHours * 3600)).clamp(0.0, 1.0);
+
+  String get totalDurationLabel =>
+      '${totalSeconds ~/ 3600}h ${((totalSeconds % 3600) ~/ 60).toString().padLeft(2, '0')}min';
 
   Map<int, int> get secondsBySubject {
     final result = <int, int>{};
@@ -46,30 +56,10 @@ class StudyViewModel extends ChangeNotifier {
       final sessions = await _repository.loadSessions();
       if (_disposed) return;
       _preferences = preferences;
-      _sessions = _mergeSessions(sessions);
+      _sessions = sessions;
       loaded = true;
     } catch (e, st) {
       error = requestErrorMessage(e, stackTrace: st);
-    } finally {
-      busy = false;
-      _notify();
-    }
-  }
-
-  Future<bool> savePreferences(StudyPreferences value) async {
-    if (busy) return false;
-    busy = true;
-    error = null;
-    _notify();
-    try {
-      await _repository.savePreferences(value);
-      if (_disposed) return false;
-      _preferences = value;
-      loaded = true;
-      return true;
-    } catch (e, st) {
-      error = requestErrorMessage(e, stackTrace: st);
-      return false;
     } finally {
       busy = false;
       _notify();
@@ -79,15 +69,15 @@ class StudyViewModel extends ChangeNotifier {
   Future<void> refreshSessions() async {
     final sessions = await _repository.loadSessions();
     if (_disposed) return;
-    _sessions = _mergeSessions(sessions);
+    _sessions = sessions;
     _notify();
   }
 
-  List<FocusSession> _mergeSessions(List<FocusSession> remote) {
-    for (final session in remote) {
-      _recentSessions.remove(session.id);
-    }
-    return [..._recentSessions.values, ...remote];
+  void _onRepositoryChanged() {
+    if (_disposed) return;
+    _preferences = _repository.currentPreferences;
+    _sessions = _repository.currentSessions;
+    _notify();
   }
 
   void _notify() {
@@ -97,6 +87,7 @@ class StudyViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    _repository.removeListener(_onRepositoryChanged);
     super.dispose();
   }
 }

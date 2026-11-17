@@ -5,7 +5,9 @@ import '../../data/repositories/subject_repository.dart';
 import '../../domain/models/subject.dart';
 
 class SubjectsViewModel extends ChangeNotifier {
-  SubjectsViewModel(this._repository);
+  SubjectsViewModel(this._repository) {
+    _repository.addListener(_onSubjectsChanged);
+  }
 
   final SubjectRepository _repository;
   List<Subject> _subjects = [];
@@ -16,6 +18,18 @@ class SubjectsViewModel extends ChangeNotifier {
   bool _isDisposed = false;
 
   List<Subject> get subjects => List.unmodifiable(_subjects);
+  Subject? subjectById(int id) =>
+      _subjects.where((subject) => subject.id == id).firstOrNull;
+
+  List<Subject> search(String query) {
+    final normalized = query.trim().toLowerCase();
+    return List.unmodifiable(
+      _subjects.where(
+        (subject) => subject.name.toLowerCase().contains(normalized),
+      ),
+    );
+  }
+
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
   String? get loadError => _loadError;
@@ -56,9 +70,9 @@ class SubjectsViewModel extends ChangeNotifier {
     _isSaving = true;
     notifyListeners();
     try {
-      final subject = await _repository.createSubject(name);
+      await _repository.createSubject(name);
       if (_isDisposed) return false;
-      _subjects = [..._subjects, subject];
+      _subjects = _repository.currentSubjects;
       return true;
     } catch (error, stackTrace) {
       _saveError = requestErrorMessage(
@@ -86,14 +100,9 @@ class SubjectsViewModel extends ChangeNotifier {
     _isSaving = true;
     notifyListeners();
     try {
-      final updated = await _repository.updateSubject(
-        Subject(id: subjectId, name: name),
-      );
+      await _repository.updateSubject(Subject(id: subjectId, name: name));
       if (_isDisposed) return false;
-      _subjects = [
-        for (final current in _subjects)
-          if (current.id == updated.id) updated else current,
-      ];
+      _subjects = _repository.currentSubjects;
       return true;
     } catch (error, stackTrace) {
       _saveError = requestErrorMessage(
@@ -116,9 +125,7 @@ class SubjectsViewModel extends ChangeNotifier {
     try {
       await _repository.deleteSubject(subjectId);
       if (_isDisposed) return false;
-      _subjects = _subjects
-          .where((subject) => subject.id != subjectId)
-          .toList();
+      _subjects = _repository.currentSubjects;
       return true;
     } catch (error, stackTrace) {
       _saveError = requestErrorMessage(
@@ -136,7 +143,14 @@ class SubjectsViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isDisposed = true;
+    _repository.removeListener(_onSubjectsChanged);
     _subjects = [];
     super.dispose();
+  }
+
+  void _onSubjectsChanged() {
+    if (_isDisposed) return;
+    _subjects = _repository.currentSubjects;
+    notifyListeners();
   }
 }

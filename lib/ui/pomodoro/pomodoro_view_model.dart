@@ -15,12 +15,10 @@ class PomodoroViewModel extends ChangeNotifier {
     this.preferences, {
     Stopwatch? stopwatch,
     int? initialSubjectId,
-    this.onSessionSaved,
   }) : _watch = stopwatch ?? Stopwatch(),
        subjectId = initialSubjectId;
   final StudyRepository _repository;
   StudyPreferences preferences;
-  final void Function(FocusSession)? onSessionSaved;
   FocusMode mode = FocusMode.focus;
   int? subjectId;
   int completedCycles = 0;
@@ -145,7 +143,6 @@ class PomodoroViewModel extends ChangeNotifier {
     try {
       final session = _pending!;
       await _repository.saveSession(session);
-      onSessionSaved?.call(session);
       _pending = null;
       sessionSaved = true;
       completedCycles++;

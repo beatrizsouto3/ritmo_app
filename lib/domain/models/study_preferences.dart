@@ -15,31 +15,6 @@ class StudyPreferences {
   final List<int> days;
   final bool configured;
 
-  factory StudyPreferences.fromJson(Map<String, dynamic> json) =>
-      StudyPreferences(
-        name: json['nome'] as String,
-        goal: json['objetivo'] as String,
-        dailyHours: json['horas_diarias'] as int,
-        focusMinutes: json['foco_minutos'] as int,
-        shortBreak: json['pausa_curta'] as int,
-        longBreak: json['pausa_longa'] as int,
-        days: List<int>.unmodifiable((json['dias'] as List).cast<int>()),
-        shift: json['turno'] as String,
-        configured: json['configurado'] as bool,
-      );
-
-  Map<String, Object> toJson() => {
-    'nome': name.trim(),
-    'objetivo': goal,
-    'horas_diarias': dailyHours,
-    'foco_minutos': focusMinutes,
-    'pausa_curta': shortBreak,
-    'pausa_longa': longBreak,
-    'dias': days,
-    'turno': shift,
-    'configurado': configured,
-  };
-
   StudyPreferences copyWith({
     String? name,
     String? goal,
@@ -73,16 +48,4 @@ class FocusSession {
   final String id;
   final int subjectId, seconds;
   final DateTime completedAt;
-  factory FocusSession.fromJson(Map<String, dynamic> json) => FocusSession(
-    id: json['id'] as String,
-    subjectId: json['disciplina_id'] as int,
-    seconds: json['segundos'] as int,
-    completedAt: DateTime.parse(json['concluido_em'] as String),
-  );
-  Map<String, Object> toJson() => {
-    'id': id,
-    'disciplina_id': subjectId,
-    'segundos': seconds,
-    'concluido_em': completedAt.toUtc().toIso8601String(),
-  };
 }

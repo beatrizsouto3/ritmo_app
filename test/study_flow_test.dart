@@ -95,13 +95,13 @@ void main() {
       });
       addTearDown(client.close);
       final clock = ControlledStopwatch();
-      final study = StudyViewModel(repository(client));
+      final studyRepository = repository(client);
+      final study = StudyViewModel(studyRepository);
       addTearDown(study.dispose);
       final vm = PomodoroViewModel(
-        repository(client),
+        studyRepository,
         const StudyPreferences(focusMinutes: 1),
         stopwatch: clock,
-        onSessionSaved: study.recordCompletedSession,
       );
       addTearDown(vm.dispose);
       vm.selectSubject(12);
@@ -138,13 +138,13 @@ void main() {
     final client = MockClient((_) async => http.Response('[]', 200));
     addTearDown(client.close);
     final clock = ControlledStopwatch();
-    final study = StudyViewModel(repository(client));
+    final studyRepository = repository(client);
+    final study = StudyViewModel(studyRepository);
     addTearDown(study.dispose);
     final vm = PomodoroViewModel(
-      repository(client),
+      studyRepository,
       const StudyPreferences(focusMinutes: 1),
       stopwatch: clock,
-      onSessionSaved: study.recordCompletedSession,
     );
     addTearDown(vm.dispose);
     vm.selectSubject(12);

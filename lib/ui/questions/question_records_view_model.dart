@@ -13,7 +13,10 @@ class QuestionRecordsViewModel extends ChangeNotifier {
     this._questionRepository,
     this._subjectRepository,
     this._topicRepository,
-  );
+  ) {
+    _questionRepository.addListener(_onRecordsChanged);
+    _subjectRepository.addListener(_onSubjectsChanged);
+  }
 
   final QuestionRepository _questionRepository;
   final SubjectRepository _subjectRepository;
@@ -232,7 +235,7 @@ class QuestionRecordsViewModel extends ChangeNotifier {
     _isSaving = true;
     _notify();
     try {
-      final record = await _questionRepository.create(
+      await _questionRepository.create(
         QuestionRecord(
           id: 0,
           subjectId: subjectId,
@@ -244,7 +247,7 @@ class QuestionRecordsViewModel extends ChangeNotifier {
         ),
       );
       if (_disposed) return false;
-      _records = [record, ..._records];
+      _records = _questionRepository.currentRecords;
       return true;
     } catch (error, stackTrace) {
       _saveError = requestErrorMessage(
@@ -275,12 +278,9 @@ class QuestionRecordsViewModel extends ChangeNotifier {
     _isSaving = true;
     _notify();
     try {
-      final updated = await _questionRepository.update(record);
+      await _questionRepository.update(record);
       if (_disposed) return false;
-      _records = [
-        for (final current in _records)
-          if (current.id == updated.id) updated else current,
-      ]..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+      _records = _questionRepository.currentRecords;
       return true;
     } catch (error, stackTrace) {
       _saveError = requestErrorMessage(
@@ -303,7 +303,7 @@ class QuestionRecordsViewModel extends ChangeNotifier {
     try {
       await _questionRepository.delete(id);
       if (_disposed) return false;
-      _records = _records.where((record) => record.id != id).toList();
+      _records = _questionRepository.currentRecords;
       return true;
     } catch (error, stackTrace) {
       _saveError = requestErrorMessage(
@@ -339,9 +339,23 @@ class QuestionRecordsViewModel extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
+  void _onRecordsChanged() {
+    if (_disposed) return;
+    _records = _questionRepository.currentRecords;
+    _notify();
+  }
+
+  void _onSubjectsChanged() {
+    if (_disposed) return;
+    _subjects = _subjectRepository.currentSubjects;
+    _notify();
+  }
+
   @override
   void dispose() {
     _disposed = true;
+    _questionRepository.removeListener(_onRecordsChanged);
+    _subjectRepository.removeListener(_onSubjectsChanged);
     _topicRequest++;
     super.dispose();
   }

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 import '../../domain/models/auth_session.dart';
+import '../mappers/auth_session_codec.dart';
 import '../services/auth_service.dart';
 import '../services/session_store.dart';
 
@@ -34,7 +35,7 @@ class AuthRepository extends ChangeNotifier {
       if (saved == null || _isDisposed) return;
       try {
         final data = Map<String, Object?>.from(jsonDecode(saved) as Map);
-        _setSession(AuthSession.fromStoredJson(data));
+        _setSession(AuthSessionCodec.fromStored(data));
       } on FormatException {
         await _persist(null);
         return;
@@ -148,7 +149,7 @@ class AuthRepository extends ChangeNotifier {
         .then(
           (_) => session == null
               ? store.clear()
-              : store.write(jsonEncode(session.toStoredJson())),
+              : store.write(jsonEncode(AuthSessionCodec.toStored(session))),
         );
     await _storageQueue;
   }

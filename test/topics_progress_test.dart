@@ -59,7 +59,7 @@ void main() {
       ),
     );
     await tester.pumpWidget(
-      Provider.value(
+      ChangeNotifierProvider.value(
         value: repository,
         child: MaterialApp(
           builder: (context, child) => MediaQuery(
