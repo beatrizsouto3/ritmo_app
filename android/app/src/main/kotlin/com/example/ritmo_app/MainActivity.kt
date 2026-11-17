@@ -1,6 +1,9 @@
 package com.example.ritmo_app
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -19,9 +22,25 @@ class MainActivity : FlutterActivity() {
     private val storageName = "ritmo_session"
     private val sessionKey = "session"
     private val keyAlias = "ritmo_session_key"
+    private val oauthChannelName = "com.example.ritmo_app/oauth"
+    private val oauthScheme = "br.ufrn.ritmo"
+    private val oauthHost = "login-callback"
+    private var pendingOAuth: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, oauthChannelName)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "authenticate" -> startOAuth(call.arguments as? String, result)
+                    "cancel" -> {
+                        pendingOAuth?.error("OAUTH_CANCELED", "OAuth canceled", null)
+                        pendingOAuth = null
+                        result.success(null)
+                    }
+                    else -> result.notImplemented()
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 try {
@@ -43,6 +62,40 @@ class MainActivity : FlutterActivity() {
                     result.error("SESSION_STORAGE_ERROR", "Cannot access saved session", null)
                 }
             }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val data = intent.data ?: return
+        if (data.scheme != oauthScheme || data.host != oauthHost) return
+        // Link sem tentativa ativa (ex.: após cancelar) é ignorado.
+        pendingOAuth?.success(data.toString())
+        pendingOAuth = null
+    }
+
+    override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        pendingOAuth = null
+        super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    private fun startOAuth(url: String?, result: MethodChannel.Result) {
+        if (url == null) {
+            result.error("OAUTH_INVALID_URL", "Invalid authorize URL", null)
+            return
+        }
+        if (pendingOAuth != null) {
+            result.error("OAUTH_IN_PROGRESS", "OAuth already in progress", null)
+            return
+        }
+        try {
+            startActivity(
+                Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+            pendingOAuth = result
+        } catch (_: ActivityNotFoundException) {
+            result.error("BROWSER_NOT_FOUND", "No browser available", null)
+        }
     }
 
     private fun readSession(): String? {

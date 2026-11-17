@@ -9,6 +9,7 @@ import '../../data/repositories/topic_repository.dart';
 import '../../data/repositories/planned_session_repository.dart';
 import '../../data/repositories/question_repository.dart';
 import '../../data/services/auth_service.dart';
+import '../../data/services/oauth_browser_service.dart';
 import '../../data/services/session_store.dart';
 import '../../data/services/flashcard_service.dart';
 import '../../data/services/subject_service.dart';
@@ -41,8 +42,11 @@ class AppDependencies extends StatelessWidget {
           dispose: (_, client) => client.close(),
         ),
         Provider(
-          create: (context) =>
-              AuthService(config: context.read(), client: context.read()),
+          create: (context) => AuthService(
+            config: context.read(),
+            client: context.read(),
+            browser: const PlatformOAuthBrowserService(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (context) => AuthRepository(
