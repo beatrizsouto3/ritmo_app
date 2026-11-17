@@ -347,7 +347,9 @@ class _AuthViewState extends State<AuthView> {
                               height: 52,
                               child: FilledButton(
                                 onPressed: viewModel.isBusy ? null : _submit,
-                                child: viewModel.isBusy
+                                child:
+                                    viewModel.isBusy &&
+                                        !viewModel.isGooglePending
                                     ? const SizedBox.square(
                                         dimension: 20,
                                         child: CircularProgressIndicator(
@@ -361,6 +363,24 @@ class _AuthViewState extends State<AuthView> {
                                       ),
                               ),
                             ),
+                            const SizedBox(height: 16),
+                            const _OrDivider(),
+                            const SizedBox(height: 16),
+                            _GoogleButton(
+                              isPending: viewModel.isGooglePending,
+                              onPressed: viewModel.isBusy
+                                  ? null
+                                  : viewModel.signInWithGoogle,
+                            ),
+                            if (viewModel.isGooglePending) ...[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: viewModel.cancelGoogleSignIn,
+                                child: const Text(
+                                  'Cancelar login com Google',
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -478,6 +498,70 @@ class _AuthModeSelector extends StatelessWidget {
             foregroundColor: selected ? Colors.white : const Color(0xFF42474F),
             padding: const EdgeInsets.symmetric(vertical: 10),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OrDivider extends StatelessWidget {
+  const _OrDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    const line = Expanded(child: Divider(color: Color(0xFFD8E2F0)));
+    return Row(
+      children: [
+        line,
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Text(
+            'ou',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: const Color(0xFF737780)),
+          ),
+        ),
+        line,
+      ],
+    );
+  }
+}
+
+class _GoogleButton extends StatelessWidget {
+  const _GoogleButton({required this.isPending, required this.onPressed});
+
+  final bool isPending;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: const Color(0xFF002B52),
+          side: const BorderSide(color: Color(0xFFD8E2F0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(28),
+          ),
+        ),
+        icon: isPending
+            ? const SizedBox.square(
+                dimension: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text(
+                'G',
+                style: TextStyle(
+                  color: Color(0xFF4285F4),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+        label: Text(
+          isPending ? 'Aguardando o Google...' : 'Continuar com Google',
         ),
       ),
     );

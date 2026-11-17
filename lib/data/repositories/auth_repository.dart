@@ -79,6 +79,19 @@ class AuthRepository extends ChangeNotifier {
     return session != null;
   }
 
+  Future<void> signInWithGoogle() async {
+    final revision = _revision;
+    final session = await _service.signInWithGoogle();
+    // Resposta que chega depois do cancelamento não cria sessão.
+    if (revision != _revision) throw const OAuthCanceledException();
+    await _activate(session, revision);
+  }
+
+  Future<void> cancelGoogleSignIn() async {
+    _revision++;
+    await _service.cancelGoogleSignIn();
+  }
+
   Future<void> signOut() async {
     final session = _session;
     _revision++;

@@ -11,6 +11,7 @@ class AuthViewModel extends ChangeNotifier {
 
   final AuthRepository _repository;
   bool _isBusy = false;
+  bool _isGooglePending = false;
   bool _isDisposed = false;
   String? _error;
   String? _message;
@@ -19,6 +20,7 @@ class AuthViewModel extends ChangeNotifier {
   bool get isAuthenticated => userId != null;
   bool get isRestoring => _repository.isRestoring;
   bool get isBusy => _isBusy;
+  bool get isGooglePending => _isGooglePending;
   String? get error => _error ?? _repository.restoreError;
   String? get message => _message;
 
@@ -43,6 +45,29 @@ class AuthViewModel extends ChangeNotifier {
         _message = 'Confira seu e-mail para confirmar o cadastro. Depois, entre na sua conta.';
       }
     });
+  }
+
+  Future<bool> signInWithGoogle() {
+    return _run(() async {
+      _isGooglePending = true;
+      try {
+        await _repository.signInWithGoogle();
+      } on OAuthCanceledException {
+        _message = 'Login com Google cancelado.';
+      } finally {
+        _isGooglePending = false;
+      }
+    });
+  }
+
+  Future<void> cancelGoogleSignIn() async {
+    if (!_isGooglePending) return;
+    try {
+      await _repository.cancelGoogleSignIn();
+    } catch (error, stackTrace) {
+      _error = requestErrorMessage(error, stackTrace: stackTrace);
+      notifyListeners();
+    }
   }
 
   Future<bool> signOut() {
