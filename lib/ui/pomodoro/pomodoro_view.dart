@@ -5,7 +5,6 @@ import '../../data/repositories/study_repository.dart';
 import '../common/main_navigation_bar.dart';
 import '../common/study_layout.dart';
 import '../study/preferences_view.dart';
-import '../study/study_view_model.dart';
 import '../subjects/subjects_view_model.dart';
 import 'focus_progress_ring.dart';
 import 'pomodoro_view_model.dart';
@@ -24,9 +23,8 @@ class PomodoroView extends StatelessWidget {
   Widget build(BuildContext context) => ChangeNotifierProvider(
     create: (context) => PomodoroViewModel(
       context.read<StudyRepository>(),
-      context.read<StudyViewModel>().preferences,
+      context.read<StudyRepository>().currentPreferences,
       initialSubjectId: initialSubjectId,
-      onSessionSaved: context.read<StudyViewModel>().recordCompletedSession,
     ),
     child: _TimerScreen(showNavigation: showNavigation),
   );
@@ -43,7 +41,7 @@ class _TimerScreen extends StatelessWidget {
     await Navigator.of(context)
         .push(MaterialPageRoute<void>(builder: (_) => const PreferencesView()));
     if (context.mounted) {
-      vm.updatePreferences(context.read<StudyViewModel>().preferences);
+      vm.updatePreferences(context.read<StudyRepository>().currentPreferences);
     }
   }
 

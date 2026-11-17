@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../../core/config/supabase_config.dart';
 import '../../core/errors/request_error.dart';
 import '../../domain/models/auth_session.dart';
+import '../mappers/auth_session_codec.dart';
 
 class AuthService {
   AuthService({required this.config, required this.client});
@@ -18,7 +19,7 @@ class AuthService {
       {'email': email, 'password': password},
       queryParameters: {'grant_type': 'password'},
     );
-    return AuthSession.fromJson(data);
+    return AuthSessionCodec.fromResponse(data);
   }
 
   Future<AuthSession?> signUp(
@@ -39,7 +40,7 @@ class AuthService {
       }
       return null;
     }
-    return AuthSession.fromJson(data);
+    return AuthSessionCodec.fromResponse(data);
   }
 
   Future<AuthSession> refreshSession(String refreshToken) async {
@@ -48,7 +49,7 @@ class AuthService {
       {'refresh_token': refreshToken},
       queryParameters: {'grant_type': 'refresh_token'},
     );
-    return AuthSession.fromJson(data);
+    return AuthSessionCodec.fromResponse(data);
   }
 
   Future<void> signOut(String accessToken) async {

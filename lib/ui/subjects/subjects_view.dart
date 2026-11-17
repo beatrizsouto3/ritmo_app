@@ -95,9 +95,7 @@ class _SubjectsViewState extends State<SubjectsView> {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<SubjectsViewModel>();
-    final subjects = viewModel.subjects
-        .where((subject) => subject.name.toLowerCase().contains(_query))
-        .toList();
+    final subjects = viewModel.search(_query);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FF),

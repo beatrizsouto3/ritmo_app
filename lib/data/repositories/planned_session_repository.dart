@@ -1,18 +1,27 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/models/planned_session.dart';
 import '../services/planning_service.dart';
 
-class PlannedSessionRepository {
-  const PlannedSessionRepository(this._service);
+class PlannedSessionRepository extends ChangeNotifier {
+  PlannedSessionRepository(this._service);
 
   final PlanningService _service;
   static const _table = 'sessoes_planejadas';
+  final Map<DateTime, List<PlannedSession>> _weeks = {};
+  bool _disposed = false;
+
+  DateTime _weekKey(DateTime date) => DateTime(
+    date.year,
+    date.month,
+    date.day,
+  ).subtract(Duration(days: date.weekday - 1));
+
+  List<PlannedSession> currentWeek(DateTime date) =>
+      List.unmodifiable(_weeks[_weekKey(date)] ?? const []);
 
   Future<List<PlannedSession>> getWeek(DateTime weekStart) async {
-    final start = DateTime(
-      weekStart.year,
-      weekStart.month,
-      weekStart.day,
-    ).subtract(Duration(days: weekStart.weekday - 1));
+    final start = _weekKey(weekStart);
     final end = start.add(const Duration(days: 7));
     final rows = await _service.request(
       'GET',
@@ -23,7 +32,10 @@ class PlannedSessionRepository {
         'order': 'inicio_em.asc',
       },
     );
-    return rows.map(PlannedSession.fromJson).toList();
+    final sessions = rows.map(_fromRow).toList();
+    _weeks[start] = sessions;
+    _notify();
+    return sessions;
   }
 
   Future<bool> hasConflict(PlannedSession session) async {
@@ -45,8 +57,10 @@ class PlannedSessionRepository {
 
   Future<PlannedSession> create(PlannedSession session) async {
     _validate(session);
-    final rows = await _service.request('POST', _table, body: session.toJson());
-    return _single(rows);
+    final rows = await _service.request('POST', _table, body: _toRow(session));
+    final created = _single(rows);
+    _replaceCached(created);
+    return created;
   }
 
   Future<PlannedSession> update(PlannedSession session) async {
@@ -56,9 +70,11 @@ class PlannedSessionRepository {
       'PATCH',
       _table,
       query: {'id': 'eq.${session.id}'},
-      body: session.toJson(),
+      body: _toRow(session),
     );
-    return _single(rows);
+    final updated = _single(rows);
+    _replaceCached(updated);
+    return updated;
   }
 
   Future<void> delete(int id) async {
@@ -71,6 +87,22 @@ class PlannedSessionRepository {
     if (rows.length != 1 || rows.single['id'] != id) {
       throw const FormatException('Sessão planejada não encontrada.');
     }
+    for (final key in _weeks.keys.toList()) {
+      _weeks[key] = _weeks[key]!.where((session) => session.id != id).toList();
+    }
+    _notify();
+  }
+
+  void _replaceCached(PlannedSession session) {
+    for (final key in _weeks.keys.toList()) {
+      final items = _weeks[key]!
+          .where((item) => item.id != session.id)
+          .toList();
+      if (key == _weekKey(session.startsAt.toLocal())) items.add(session);
+      items.sort((a, b) => a.startsAt.compareTo(b.startsAt));
+      _weeks[key] = items;
+    }
+    _notify();
   }
 
   void _validate(PlannedSession session) {
@@ -92,6 +124,35 @@ class PlannedSessionRepository {
     if (rows.length != 1) {
       throw const FormatException('Sessão planejada não encontrada.');
     }
-    return PlannedSession.fromJson(rows.single);
+    return _fromRow(rows.single);
+  }
+
+  PlannedSession _fromRow(Map<String, dynamic> row) => PlannedSession(
+    id: row['id'] as int,
+    subjectId: row['disciplina_id'] as int,
+    topicId: row['topico_id'] as int?,
+    startsAt: DateTime.parse(row['inicio_em'] as String),
+    endsAt: DateTime.parse(row['fim_em'] as String),
+    status: PlannedSessionStatus.values.byName(row['estado'] as String),
+    notes: row['observacoes'] as String?,
+  );
+
+  Map<String, Object?> _toRow(PlannedSession session) => {
+    'disciplina_id': session.subjectId,
+    'topico_id': session.topicId,
+    'inicio_em': session.startsAt.toUtc().toIso8601String(),
+    'fim_em': session.endsAt.toUtc().toIso8601String(),
+    'estado': session.status.name,
+    'observacoes': session.notes,
+  };
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }

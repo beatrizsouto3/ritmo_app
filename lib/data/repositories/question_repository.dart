@@ -1,11 +1,18 @@
+import 'package:flutter/foundation.dart';
+
 import '../../domain/models/question_record.dart';
 import '../services/planning_service.dart';
 
-class QuestionRepository {
-  const QuestionRepository(this._service);
+class QuestionRepository extends ChangeNotifier {
+  QuestionRepository(this._service);
 
   final PlanningService _service;
   static const _table = 'registros_questoes';
+  List<QuestionRecord>? _records;
+  bool _disposed = false;
+
+  List<QuestionRecord> get currentRecords =>
+      List.unmodifiable(_records ?? const []);
 
   Future<List<QuestionRecord>> getRecords({int? subjectId}) async {
     if (subjectId != null && subjectId <= 0) {
@@ -19,27 +26,45 @@ class QuestionRepository {
         'order': 'realizado_em.desc',
       },
     );
-    return rows.map(QuestionRecord.fromJson).toList();
+    final records = rows.map(_fromRow).toList();
+    if (subjectId == null) {
+      _records = records;
+      _notify();
+    }
+    return records;
   }
 
   Future<QuestionRecord> create(QuestionRecord record) async {
     _validate(record);
-    return _single(
-      await _service.request('POST', _table, body: record.toJson()),
+    final created = _single(
+      await _service.request('POST', _table, body: _toRow(record)),
     );
+    if (_records != null) {
+      _records = [created, ..._records!];
+      _notify();
+    }
+    return created;
   }
 
   Future<QuestionRecord> update(QuestionRecord record) async {
     if (record.id <= 0) throw ArgumentError.value(record.id, 'id');
     _validate(record);
-    return _single(
+    final updated = _single(
       await _service.request(
         'PATCH',
         _table,
         query: {'id': 'eq.${record.id}'},
-        body: record.toJson(),
+        body: _toRow(record),
       ),
     );
+    if (_records != null) {
+      _records = [
+        for (final current in _records!)
+          if (current.id == updated.id) updated else current,
+      ]..sort((a, b) => b.recordedAt.compareTo(a.recordedAt));
+      _notify();
+    }
+    return updated;
   }
 
   Future<void> delete(int id) async {
@@ -51,6 +76,10 @@ class QuestionRepository {
     );
     if (rows.length != 1 || rows.single['id'] != id) {
       throw const FormatException('Registro de questões não encontrado.');
+    }
+    if (_records != null) {
+      _records = _records!.where((record) => record.id != id).toList();
+      _notify();
     }
   }
 
@@ -71,6 +100,35 @@ class QuestionRepository {
     if (rows.length != 1) {
       throw const FormatException('Registro de questões não encontrado.');
     }
-    return QuestionRecord.fromJson(rows.single);
+    return _fromRow(rows.single);
+  }
+
+  QuestionRecord _fromRow(Map<String, dynamic> row) => QuestionRecord(
+    id: row['id'] as int,
+    subjectId: row['disciplina_id'] as int,
+    topicId: row['topico_id'] as int?,
+    total: row['total'] as int,
+    correct: row['acertos'] as int,
+    incorrect: row['erros'] as int,
+    recordedAt: DateTime.parse(row['realizado_em'] as String),
+  );
+
+  Map<String, Object?> _toRow(QuestionRecord record) => {
+    'disciplina_id': record.subjectId,
+    'topico_id': record.topicId,
+    'total': record.total,
+    'acertos': record.correct,
+    'erros': record.incorrect,
+    'realizado_em': record.recordedAt.toUtc().toIso8601String(),
+  };
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../data/repositories/study_repository.dart';
 import '../auth/auth_view_model.dart';
 import '../common/study_layout.dart';
 import '../subjects/subjects_view.dart';
@@ -38,7 +39,8 @@ class PreferencesView extends StatelessWidget {
       );
     }
     return ChangeNotifierProvider(
-      create: (context) => PreferencesViewModel(context.read<StudyViewModel>()),
+      create: (context) =>
+          PreferencesViewModel(context.read<StudyRepository>()),
       child: _PreferencesScreen(onboarding: onboarding),
     );
   }

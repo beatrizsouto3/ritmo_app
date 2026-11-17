@@ -36,23 +36,11 @@ class DashboardView extends StatelessWidget {
     final metrics = context.watch<DashboardMetricsViewModel>();
     final now = DateTime.now();
     final urgent = metrics.urgentTopics(now);
-    final today = metrics.sessionsToday(now)
-      ..sort((first, second) => first.startsAt.compareTo(second.startsAt));
-    final nextSession = today
-        .where((session) => session.endsAt.isAfter(now))
-        .firstOrNull;
-    final todaySeconds = study.sessions
-        .where((session) {
-          final day = session.completedAt.toLocal();
-          return day.year == now.year &&
-              day.month == now.month &&
-              day.day == now.day;
-        })
-        .fold<int>(0, (total, session) => total + session.seconds);
+    final today = metrics.orderedSessionsToday(now);
+    final nextSession = metrics.nextSession(now);
+    final todaySeconds = study.secondsOn(now);
     final goalSeconds = study.preferences.dailyHours * 3600;
-    final progress = goalSeconds == 0
-        ? 0.0
-        : (todaySeconds / goalSeconds).clamp(0.0, 1.0);
+    final progress = study.dailyProgress(now);
 
     return Scaffold(
       appBar: AppBar(
@@ -131,11 +119,7 @@ class DashboardView extends StatelessWidget {
                   accuracy: metrics.accuracy == null
                       ? '—'
                       : '${(metrics.accuracy! * 100).round()}%',
-                  cycles:
-                      '${study.sessions.where((session) {
-                        final day = session.completedAt.toLocal();
-                        return day.year == now.year && day.month == now.month && day.day == now.day;
-                      }).length}',
+                  cycles: '${study.sessionsOn(now).length}',
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -159,9 +143,7 @@ class DashboardView extends StatelessWidget {
                   session: nextSession,
                   subject: nextSession == null
                       ? null
-                      : subjects.subjects
-                            .where((item) => item.id == nextSession.subjectId)
-                            .firstOrNull,
+                      : subjects.subjectById(nextSession.subjectId),
                   focusMinutes: study.preferences.focusMinutes,
                   onStart: () => _open(
                     context,
@@ -186,12 +168,7 @@ class DashboardView extends StatelessWidget {
                 for (final item in urgent.take(3))
                   _ReviewCard(
                     subject:
-                        subjects.subjects
-                            .where(
-                              (subject) => subject.id == item.topic.subjectId,
-                            )
-                            .map((subject) => subject.name)
-                            .firstOrNull ??
+                        subjects.subjectById(item.topic.subjectId)?.name ??
                         'Disciplina',
                     topic: item.topic.name,
                     reason: item.reason,
@@ -242,12 +219,7 @@ class DashboardView extends StatelessWidget {
                               ),
                             ),
                             title: Text(
-                              subjects.subjects
-                                      .where(
-                                        (item) => item.id == session.subjectId,
-                                      )
-                                      .map((item) => item.name)
-                                      .firstOrNull ??
+                              subjects.subjectById(session.subjectId)?.name ??
                                   'Disciplina',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,

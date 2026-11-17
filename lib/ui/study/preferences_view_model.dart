@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 
+import '../../core/errors/request_error.dart';
+import '../../data/repositories/study_repository.dart';
 import '../../domain/models/study_preferences.dart';
-import 'study_view_model.dart';
 
 class PreferencesViewModel extends ChangeNotifier {
-  PreferencesViewModel(this.source) : draft = source.preferences;
-  final StudyViewModel source;
+  PreferencesViewModel(this._repository)
+    : draft = _repository.currentPreferences;
+  final StudyRepository _repository;
   StudyPreferences draft;
   int step = 0;
   bool saving = false;
@@ -27,14 +29,18 @@ class PreferencesViewModel extends ChangeNotifier {
     saving = true;
     error = null;
     notifyListeners();
-    final saved = await source.savePreferences(
-      draft.copyWith(configured: complete || draft.configured),
-    );
-    if (_disposed) return saved;
-    saving = false;
-    error = source.error;
-    notifyListeners();
-    return saved;
+    try {
+      await _repository.savePreferences(
+        draft.copyWith(configured: complete || draft.configured),
+      );
+      return true;
+    } catch (exception, stackTrace) {
+      error = requestErrorMessage(exception, stackTrace: stackTrace);
+      return false;
+    } finally {
+      saving = false;
+      if (!_disposed) notifyListeners();
+    }
   }
 
   @override
